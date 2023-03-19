@@ -9,7 +9,7 @@ class CEllipse
 {
 private:
 
-	sf::CircleShape m_rCircle;
+	sf::ConvexShape m_rEllipse;
 
 	// The position of our line
 	sf::Vector2f m_rStartPos, m_rEndPos;
@@ -23,7 +23,11 @@ private:
 
 public:
 
-	CEllipse() : m_bDrawing(false), m_bShouldPlace(false) { }
+	CEllipse() : m_bDrawing(false), m_bShouldPlace(false)
+	{
+		// How detailed we want our ellipses
+		m_rEllipse.setPointCount(50);
+	}
 
 	void Update(const sf::RenderWindow& _rWindow);
 

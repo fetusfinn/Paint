@@ -2,16 +2,22 @@
 //	Paint
 //
 #include <iostream>
+#include <sstream>
+
+#include "globals.h"
 
 #include "gui.h"
 
 #include "line.h"
 #include "rect.h"
-
+#include "ellipse.h"
 
 
 #define debug(msg) std::cout << "[debug] " << msg << std::endl
 
+//
+// The different brush types
+//
 enum EBrushType
 {
 	BRUSH_NONE = 0,
@@ -22,20 +28,11 @@ enum EBrushType
 	BRUSH_POLY,
 };
 
-enum EBrushThickness
-{
-	BRUSH_THIN = 0,
-	BRUSH_MEDIUM,
-	BRUSH_THICK,
-
-	BRUSH_SIZE_COUNT = 3,
-};
-
 // The brush we want to use
 EBrushType g_eBrushType = BRUSH_LINE;
 
 // The size of our brush
-EBrushThickness g_eBrushSize = BRUSH_THICK;
+float g_fBrushSize = 0;
 
 // The colour we want to draw with
 sf::Color g_rBrushColour = sf::Color::Black;
@@ -45,6 +42,17 @@ int g_iScreenWidth, g_iScreenHeight;
 
 // The size of our window
 int g_iWindowWidth, g_iWindowHeight;
+
+bool HasScreenSizeChanged()
+{
+	static int iLastScreenWidth = 0, iLastScreenHeight = 0;
+
+	iLastScreenWidth = g_iScreenWidth;
+	iLastScreenHeight = g_iScreenHeight;
+
+
+	return false;
+}
 
 //
 // Finds the users screen size and sets the window size
@@ -83,14 +91,15 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, const std::vector<TMenuIte
 		break;
 
 	case 3:
-		g_eBrushType == BRUSH_ELLIPSE;
+		g_eBrushType = BRUSH_ELLIPSE;
 		break;
 
 	case 4:
-		// TODO 
+		// TODO : Colour picker
 		break;
 
 	case 5:
+		// Change brush size
 		// Functionality is done elsewhere
 		break;
 
@@ -106,34 +115,21 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, const std::vector<TMenuIte
 	return iMenuSelection;
 }
 
-//
-// Handles all mouse click events
-//
-void HandleMouseClicks()
-{
-	
-}
 
 //
 // Change the brush size
 //
 void ChangeBrushSize()
 {
-	static int iBrushSize = 0;
-
 	// Move to the next brush size
-	iBrushSize++;
+	g_fBrushSize++;
+
+	// -1 because we're counting from 0
+	static const int kMaxBrushSize = 4;
 
 	// Loop thru the brush sizes
-	if (iBrushSize == BRUSH_SIZE_COUNT)
-		iBrushSize = BRUSH_THIN;
-
-	// Set the brush size
-	// Dont really need to use an enum for this to be honest
-	// but it's good for readability
-	g_eBrushSize = static_cast<EBrushThickness>(iBrushSize);
-
-	debug(iBrushSize);
+	if (g_fBrushSize > kMaxBrushSize)
+		g_fBrushSize = 0;
 }
 
 //
@@ -171,9 +167,10 @@ int main()
 	sf::Vector2i rPrevMousePos(0, 0);
 
 
-	// Our line object
+	// Our shapes
 	CLine rLine;
 	CRectangle rRect;
+	CEllipse rEllipse;
 
 	// Our gui object
 	CGui rGui(&rWindow);
@@ -186,18 +183,17 @@ int main()
 	vMenuItems.emplace_back(TMenuItemData(1, "Rectangle",	2));
 	vMenuItems.emplace_back(TMenuItemData(1, "Ellipse",		3));
 	vMenuItems.emplace_back(TMenuItemData(2, "Colours",		4));
-	vMenuItems.emplace_back(TMenuItemData(1, "Width",		5));
+	vMenuItems.emplace_back(TMenuItemData(1, "Width 1",		5));
 	vMenuItems.emplace_back(TMenuItemData(1, "Clear",		6));
 
 	// TODO : 
-	// vMenuItems.push_back(TMenuItem(MENU_ITEM_BUTTON, "Polygon",		MENU_ITEM_POLY));
-	// vMenuItems.push_back(TMenuItem(MENU_ITEM_BUTTON, "Free draw",	MENU_ITEM_FREE));
+	// vMenuItems.push_back(TMenuItem(1, "Polygon",		7));
+	// vMenuItems.push_back(TMenuItem(1, "Free draw",	8));
 
 
 
 	// Our currnt selection for the menu
 	int iMenuSelection = 0;
-	int iLastMenuSelection = 0;
 
 	// Whether or not the app should run
 	bool bRunning = true;
@@ -212,10 +208,7 @@ int main()
 				rWindow.close();
 		}
 
-		if (iLastMenuSelection != iMenuSelection)
-			debug(iMenuSelection);
-
-		iLastMenuSelection = iMenuSelection;
+		// Get the menu selection
 		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, vMenuItems, pRenderTex);
 		
 
@@ -235,9 +228,7 @@ int main()
 			break;
 
 		case BRUSH_ELLIPSE:
-			{
-				// TODO 
-			}
+			rEllipse.Update(rWindow);
 			break;
 
 		case BRUSH_POLY:
@@ -257,7 +248,7 @@ int main()
 					{
 						rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x, mouse_pos.y), sf::Color::Red));
 
-						for (int i = 0; i < g_eBrushSize; i++)
+						for (int i = 0; i < g_fBrushSize; i++)
 						{
 							rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x + i, mouse_pos.y), sf::Color::Red));
 							rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x - i, mouse_pos.y), sf::Color::Red));
@@ -287,6 +278,8 @@ int main()
 				rLine.OnClick(rWindow);
 			else if (g_eBrushType == BRUSH_RECT)
 				rRect.OnClick(rWindow);
+			else if (g_eBrushType == BRUSH_ELLIPSE)
+				rEllipse.OnClick(rWindow);
 		}
 		else
 		{
@@ -297,11 +290,10 @@ int main()
 
 				if (g_eBrushType == BRUSH_LINE)
 					rLine.OnRelease();
-
 				else if (g_eBrushType == BRUSH_RECT)
 					rRect.OnRelease();
-
-
+				else if (g_eBrushType == BRUSH_ELLIPSE)
+					rEllipse.OnRelease();
 
 
 
@@ -309,6 +301,17 @@ int main()
 				if (iMenuSelection == 5)
 				{
 					ChangeBrushSize();
+
+					std::stringstream ss;
+
+					// Dont want any trailing 0s since g_fBrushSize if a float
+					ss.precision(0);
+
+					// Build the string
+					ss << "Width " << g_fBrushSize + 1;
+
+					// Update the label
+					vMenuItems.at(4).m_strLabel = ss.str();
 
 					// Brush size changed, change selection so we dont change the
 					// brush size again when we click
@@ -321,8 +324,6 @@ int main()
 			}
 		}
 
-		// TODO 
-		HandleMouseClicks();
 
 
 
@@ -335,14 +336,13 @@ int main()
 
 		// Draw everything
 		{
-			// Draw
+			// Draw our shapes
 			if (g_eBrushType == BRUSH_LINE)
 				rLine.Draw(rWindow, pRenderTex);
-
 			else if (g_eBrushType == BRUSH_RECT)
 				rRect.Draw(rWindow, pRenderTex);
-
-
+			else if (g_eBrushType == BRUSH_ELLIPSE)
+				rEllipse.Draw(rWindow, pRenderTex);
 
 
 

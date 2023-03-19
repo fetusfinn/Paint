@@ -1,6 +1,8 @@
 //
 //	rect.cpp
 //
+#include "globals.h"
+
 #include "rect.h"
 
 //
@@ -22,7 +24,7 @@ void CRectangle::Update(const sf::RenderWindow& _rWindow)
 	m_rRect.setPosition(m_rStartPos);
 	m_rRect.setSize(rSize);
 
-	m_rRect.setFillColor(sf::Color::Red);
+	m_rRect.setFillColor(g_rBrushColour);
 }
 
 //

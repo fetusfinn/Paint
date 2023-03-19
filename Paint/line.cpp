@@ -1,6 +1,8 @@
 //
 //	line.cpp
 //
+#include "globals.h"
+
 #include "line.h"
 
 //
@@ -8,9 +10,6 @@
 //
 void CLine::Update(const sf::RenderWindow& _rWindow)
 {
-	// Reset the line each tick
-	m_rLine.clear();
-
 	// If drawing the line
 	if (m_bDrawing)
 	{
@@ -19,9 +18,20 @@ void CLine::Update(const sf::RenderWindow& _rWindow)
 		m_rEndPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
 	}
 
-	// Add the two end of our line to the vertex array
-	m_rLine.append(sf::Vertex(m_rStartPos, sf::Color::Red));
-	m_rLine.append(sf::Vertex(m_rEndPos, sf::Color::Red));
+	// The difference between the points
+	sf::Vector2f fDifference = m_rEndPos - m_rStartPos;
+
+	// Calculate the angle between the two points
+	float fAngle = atan2f(fDifference.y, fDifference.x) * 180 / M_PI;
+
+	// Calculate the distance between
+	float fDist = sqrtf(std::pow(fDifference.x, 2) + std::pow(fDifference.y, 1));
+
+	// Set the transformations
+	m_rLine.setPosition(m_rStartPos);
+	m_rLine.setSize(sf::Vector2f(fDist, (g_fBrushSize * 2) + 1));
+	m_rLine.setRotation(fAngle);
+	m_rLine.setFillColor(g_rBrushColour);
 }
 
 //

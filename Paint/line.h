@@ -9,7 +9,7 @@ class CLine
 {
 private:
 
-	sf::VertexArray m_rLine;
+	sf::RectangleShape m_rLine;
 
 	// The position of our line
 	sf::Vector2f m_rStartPos, m_rEndPos;
@@ -23,11 +23,7 @@ private:
 
 public:
 
-	CLine() : m_bDrawing(false), m_bShouldPlace(false)
-	{
-		// Set it to a line
-		m_rLine.setPrimitiveType(sf::LineStrip);
-	}
+	CLine() : m_bDrawing(false), m_bShouldPlace(false) { }
 
 	void Update(const sf::RenderWindow& _rWindow);
 
