@@ -148,6 +148,14 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="gui.h" />
     <ClCompile Include="gui.cpp" />
+    <ClCompile Include="line.cpp" />
+    <ClCompile Include="rect.cpp" />
+    <ClCompile Include="ellipse.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ellipse.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="line.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

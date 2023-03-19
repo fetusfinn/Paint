@@ -9,55 +9,21 @@
 #include <SFML/Graphics.hpp>
 
 //
-// Enum of all our items that are in the menu
-//
-enum EMenuItem
-{
-	MENU_ITEM_NONE = 0,
-
-	MENU_ITEM_LINE,
-	MENU_ITEM_RECT,
-	MENU_ITEM_ELLIPSE,
-	MENU_ITEM_COLOUR_PICKER,
-	MENU_ITEM_SIZE,		// Brush size
-	MENU_ITEM_CLEAR,	// Clear the screen
-
-	// TODO :
-	MENU_ITEM_POLY,
-	MENU_ITEM_FREE,
-
-	MENU_ITEM_COUNT = 7 - 2, // 7 is total, -2 are the extras
-};
-
-//
-// Enum of the types of menu items
-//
-enum EMenuItemType
-{
-	MENU_ITEM_INVALID = 0,
-
-	MENU_ITEM_BUTTON,
-	MENU_ITEM_COLOUR,
-
-	MENU_ITEM_TYPE_COUNT = 2,
-};
-
-//
 // Data for menu items such as buttons and colour pickers
 //
 struct TMenuItemData
 {
 	// The type of item this is
-	EMenuItemType m_eType;
+	int m_iType;
 
 	// The label for this item
 	std::string m_strLabel;
 
 	// The return value for when it's selected
-	EMenuItem m_eValue;
+	int m_iValue;
 
 	// Constructor
-	TMenuItemData(EMenuItemType _eType, const std::string& _strLabel, EMenuItem _eValue) : m_eType(_eType), m_strLabel(_strLabel), m_eValue(_eValue) { }
+	TMenuItemData(int _iType, const std::string& _strLabel, int _iValue) : m_iType(_iType), m_strLabel(_strLabel), m_iValue(_iValue) { }
 };
 
 //
@@ -102,7 +68,7 @@ public:
 
 	void Draw();
 
-	EMenuItem HandleMenuBar(const std::vector<TMenuItemData>& _vItems);
+	int HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems);
 };
 
 //

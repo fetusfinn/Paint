@@ -1,9 +1,14 @@
 //
 //	Paint
 //
+#include <iostream>
+
 #include "gui.h"
 
-#include <iostream>
+#include "line.h"
+#include "rect.h"
+
+
 
 #define debug(msg) std::cout << "[debug] " << msg << std::endl
 
@@ -55,6 +60,83 @@ void ResetScreenAndWindowSize()
 }
 
 //
+// Handles the menu selection
+//
+int HandleMenuSelection(int _iSelection, CGui& _rGui, const std::vector<TMenuItemData>& _vMenuItems, sf::RenderTexture* _pRenderTex)
+{
+	// Generate our menu and handle the user's selection
+	int iMenuSelection = _rGui.HandleMenuBar(_iSelection, _vMenuItems);
+
+	// Now handle the user's selection
+	switch (iMenuSelection)
+	{
+	case 0:
+		g_eBrushType = BRUSH_NONE;
+		break;
+
+	case 1:
+		g_eBrushType = BRUSH_LINE;
+		break;
+
+	case 2:
+		g_eBrushType = BRUSH_RECT;
+		break;
+
+	case 3:
+		g_eBrushType == BRUSH_ELLIPSE;
+		break;
+
+	case 4:
+		// TODO 
+		break;
+
+	case 5:
+		// Functionality is done elsewhere
+		break;
+
+	case 6:
+		// Clear the screen so just reset the texture
+		_pRenderTex->clear(sf::Color::White);
+
+		// Only want to clear once
+		iMenuSelection = 0;
+		break;
+	}
+
+	return iMenuSelection;
+}
+
+//
+// Handles all mouse click events
+//
+void HandleMouseClicks()
+{
+	
+}
+
+//
+// Change the brush size
+//
+void ChangeBrushSize()
+{
+	static int iBrushSize = 0;
+
+	// Move to the next brush size
+	iBrushSize++;
+
+	// Loop thru the brush sizes
+	if (iBrushSize == BRUSH_SIZE_COUNT)
+		iBrushSize = BRUSH_THIN;
+
+	// Set the brush size
+	// Dont really need to use an enum for this to be honest
+	// but it's good for readability
+	g_eBrushSize = static_cast<EBrushThickness>(iBrushSize);
+
+	debug(iBrushSize);
+}
+
+//
 // Main
 //
 int main()
@@ -64,11 +146,6 @@ int main()
 
 	// Our main paint window
 	sf::RenderWindow rWindow(sf::VideoMode(g_iWindowWidth, g_iWindowHeight), "Paint");
-
-	// TODO : have a second window for the colour picker
-	// sf::RenderWindow rColourWindow(sf::VideoMode(g_iWindowWidth / 2, g_iWindowHeight / 2), "Colour picker");
-
-
 
 
 	// To draw texture 
@@ -81,63 +158,46 @@ int main()
 	sf::RectangleShape* pCanvas = new sf::RectangleShape(sf::Vector2f(rWindow.getSize().x, rWindow.getSize().y));
 	pCanvas->setTexture(&pRenderTex->getTexture());
 
+	// Whether or not our mouse was pressed last tick
+	bool bMouseDownLast = false;
+
 
 
 	// Used to free draw lines
 	sf::VertexArray rCurrentLine;
 	rCurrentLine.setPrimitiveType(sf::LineStrip);
 
-
 	// The last position of our mouse
 	sf::Vector2i rPrevMousePos(0, 0);
 
-	// Our free draw vertex array
-	sf::VertexArray rFreeDrawLine;
 
-	// Whether or not our mouse was pressed last tick
-	bool bMouseDownLast = false;
+	// Our line object
+	CLine rLine;
+	CRectangle rRect;
 
-	// Whether or not the mouse was released after being down
-	bool bMouseReleased = false;
-
-
-	// The vertex array for our straight line
-	sf::VertexArray rLine;
-	rLine.setPrimitiveType(sf::LineStrip);
-
-	// The position of our line
-	sf::Vector2f rLineStartPos, rLineEndPos;
-
-	// Whether or not we are drawing our line
-	bool bDrawingLine = false;
-
-	// Whether or not we should draw the line to our texture and
-	// finalise the transformation(s)
-	bool bShouldPlaceLine = false;
-
-
-
-	// Our gui
+	// Our gui object
 	CGui rGui(&rWindow);
 
 	// Our menu bar items
 	std::vector<TMenuItemData> vMenuItems;
 
 	// Add them all 
-	vMenuItems.emplace_back(TMenuItemData(MENU_ITEM_BUTTON, "Line",		MENU_ITEM_LINE));
-	vMenuItems.emplace_back(TMenuItemData(MENU_ITEM_BUTTON, "Rectangle",	MENU_ITEM_RECT));
-	vMenuItems.emplace_back(TMenuItemData(MENU_ITEM_BUTTON, "Ellipse",		MENU_ITEM_ELLIPSE));
-	vMenuItems.emplace_back(TMenuItemData(MENU_ITEM_COLOUR, "Colours",		MENU_ITEM_COLOUR_PICKER));
-	vMenuItems.emplace_back(TMenuItemData(MENU_ITEM_BUTTON, "Width",		MENU_ITEM_SIZE));
-	vMenuItems.emplace_back(TMenuItemData(MENU_ITEM_BUTTON, "Clear",		MENU_ITEM_CLEAR));
+	vMenuItems.emplace_back(TMenuItemData(1, "Line",		1));
+	vMenuItems.emplace_back(TMenuItemData(1, "Rectangle",	2));
+	vMenuItems.emplace_back(TMenuItemData(1, "Ellipse",		3));
+	vMenuItems.emplace_back(TMenuItemData(2, "Colours",		4));
+	vMenuItems.emplace_back(TMenuItemData(1, "Width",		5));
+	vMenuItems.emplace_back(TMenuItemData(1, "Clear",		6));
 
 	// TODO : 
 	// vMenuItems.push_back(TMenuItem(MENU_ITEM_BUTTON, "Polygon",		MENU_ITEM_POLY));
 	// vMenuItems.push_back(TMenuItem(MENU_ITEM_BUTTON, "Free draw",	MENU_ITEM_FREE));
 
-	// To keep track of our brush size
-	int iBrushSize = 0;
 
+
+	// Our currnt selection for the menu
+	int iMenuSelection = 0;
+	int iLastMenuSelection = 0;
 
 	// Whether or not the app should run
 	bool bRunning = true;
@@ -152,102 +212,26 @@ int main()
 				rWindow.close();
 		}
 
-		// Generate our menu and handle the user's selection
-		int iMenuSelection = rGui.HandleMenuBar(vMenuItems);
+		if (iLastMenuSelection != iMenuSelection)
+			debug(iMenuSelection);
 
-		// Now handle the user's selection
-		switch (iMenuSelection)
-		{
-		case MENU_ITEM_LINE:
-			g_eBrushType = BRUSH_LINE;
-			break;
-
-		case MENU_ITEM_RECT:
-			g_eBrushType = BRUSH_RECT;
-			break;
-
-		case MENU_ITEM_ELLIPSE:
-			g_eBrushType == BRUSH_ELLIPSE;
-			break;
-
-		case MENU_ITEM_COLOUR_PICKER:
-			// TODO 
-			break;
-
-		case MENU_ITEM_SIZE:
-
-			// Move to the next brush size
-			iBrushSize++;
-
-			// Loop thru the brush sizes
-			if (iBrushSize == BRUSH_SIZE_COUNT)
-				iBrushSize = BRUSH_THIN;
-
-			// Set the brush size
-			// Dont really need to use an enum for this to be honest
-			// but it's good for readability
-			g_eBrushSize = static_cast<EBrushThickness>(iBrushSize);
-
-			debug(iBrushSize);
-
-			break;
-
-		case MENU_ITEM_CLEAR:
-			// Clear the screen so just reset the texture
-			pRenderTex->clear(sf::Color::White);
-			break;
-		}
+		iLastMenuSelection = iMenuSelection;
+		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, vMenuItems, pRenderTex);
+		
 
 
 		// Draw with selected brush type
 		switch (g_eBrushType)
 		{
+		case BRUSH_NONE:
+			break;
+
 		case BRUSH_LINE:
-			{
-				// Reset the line each tick
-				rLine.clear();
-
-				sf::Vector2i rMousePos = sf::Mouse::getPosition(rWindow);
-
-				// If the mouse was just clicked and we're not drawing
-				if (IsMouseClicked() && !bDrawingLine)
-				{
-					// Then store the mouse's position to use as our starting
-					// point for our line
-					rLineStartPos = sf::Vector2f(rMousePos);
-
-					// Start to draw the line
-					bDrawingLine = true;
-				}
-
-				// If drawing the line
-				if (bDrawingLine)
-				{
-					// Store the mouse's pos for the end point so we draw a line between
-					// points while the user is still deciding where to actually end the line
-					rLineEndPos = sf::Vector2f(rMousePos);
-				}
-
-				// If the mouse was released
-				if (bMouseReleased)
-				{
-					// Then we should draw the line to our texture/canvas to finialise it
-					bShouldPlaceLine = true;
-
-					// And stop drawing the temp line
-					bDrawingLine = false;
-				}
-
-				// Add the two end of our line to the vertex array
-				rLine.append(sf::Vertex(rLineStartPos, sf::Color::Red));
-				rLine.append(sf::Vertex(rLineEndPos, sf::Color::Red));
-			}
+			rLine.Update(rWindow);
 			break;
 
 		case BRUSH_RECT:
-			{
-				// TODO
-			}
+			rRect.Update(rWindow);
 			break;
 
 		case BRUSH_ELLIPSE:
@@ -265,7 +249,6 @@ int main()
 		case BRUSH_FREE:
 			{
 				// TODO 
-
 				if (IsMouseClicked())
 				{
 					// Free draw stuff
@@ -289,42 +272,58 @@ int main()
 			break;
 
 		default:
-		case BRUSH_NONE: // The starting brush
 			break;
 		}
 
 
 
 		// Mouse click stuff
+		if (IsMouseClicked())
 		{
-			// If the mouse was released last tick
-			if (bMouseReleased)
+			// If the mouse is clicked then is is down this tick
+			bMouseDownLast = true;
+
+			if (g_eBrushType == BRUSH_LINE)
+				rLine.OnClick(rWindow);
+			else if (g_eBrushType == BRUSH_RECT)
+				rRect.OnClick(rWindow);
+		}
+		else
+		{
+			// Mouse was released
+			if (bMouseDownLast)
 			{
+				bMouseDownLast = false;
+
+				if (g_eBrushType == BRUSH_LINE)
+					rLine.OnRelease();
+
+				else if (g_eBrushType == BRUSH_RECT)
+					rRect.OnRelease();
+
+
+
+
+
+				// If change brush size was selected
+				if (iMenuSelection == 5)
+				{
+					ChangeBrushSize();
+
+					// Brush size changed, change selection so we dont change the
+					// brush size again when we click
+					iMenuSelection = 0;
+				}
+
 				// Then clear our free draw line
 				rCurrentLine.clear();
 
-				// And reset this
-				// We should handle all mouse released stuff before this
-				bMouseReleased = false;
-			}
-
-			if (IsMouseClicked())
-			{
-				// If the mouse is clicked then is is down this tick
-				bMouseDownLast = true;
-			}
-			else
-			{
-				// If the mouse was down last and we're no longer clicking
-				if (bMouseDownLast)
-				{
-					bMouseDownLast = false;
-
-					// Then the mouse was just released
-					bMouseReleased = true;
-				}
 			}
 		}
+
+		// TODO 
+		HandleMouseClicks();
+
 
 
 		
@@ -336,28 +335,17 @@ int main()
 
 		// Draw everything
 		{
-			// Draw our free draw line
-			pRenderTex->draw(rCurrentLine);
-
-			// 
+			// Draw
 			if (g_eBrushType == BRUSH_LINE)
-			{
-				if (bDrawingLine)
-				{
-					// If we havent confirmed the line yet then
-					// draw a placeholder from the origin to the mouse
-					rWindow.draw(rLine);
-				}
-				else if (bShouldPlaceLine)
-				{
-					// Finished drawing so now draw the final line
-					// to our texture to set it in stone
-					pRenderTex->draw(rLine);
+				rLine.Draw(rWindow, pRenderTex);
 
-					// Line has been placed
-					bShouldPlaceLine = false;
-				}
-			}
+			else if (g_eBrushType == BRUSH_RECT)
+				rRect.Draw(rWindow, pRenderTex);
+
+
+
+
+
 
 			// Draw our GUI last so its on top of everything else
 			rGui.Draw();

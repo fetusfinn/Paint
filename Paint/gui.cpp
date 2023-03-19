@@ -34,30 +34,32 @@ void CGui::Draw()
 //
 // Generate the shapes for the menu bar and handle its items inputs
 //
-EMenuItem CGui::HandleMenuBar(const std::vector<TMenuItemData>& _vItems)
+int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems)
 {
+    int iReturn = _iLastSelection;
+
     // Loop thru our menu items and draw them
     for (TMenuItemData rItem : _vItems)
     {
-        switch (rItem.m_eType)
+        switch (rItem.m_iType)
         {
-        case MENU_ITEM_BUTTON:
+        case 1: // MENU_ITEM_BUTTON
 	        {
                 // If our item is a button then draw it with the given label
-                // and return its value if clicked
+                // and set its return value if clicked
 	            if (Button(rItem.m_strLabel))
-	                return rItem.m_eValue;
+                    iReturn = rItem.m_iValue;
 	        }
             break;
 
-        case MENU_ITEM_COLOUR:
+        case 2: // MENU_ITEM_COLOUR
 	        {
 		        // TODO : 
 	        }
             break;
 
         default:
-        case MENU_ITEM_INVALID:
+        case 0: // MENU_ITEM_INVALID
             // MENU_ITEM_INVALID should only be triggered if we forgot to
             // give our TMenuItem a type, which shouldn't happen but who knows
             continue;
@@ -65,7 +67,7 @@ EMenuItem CGui::HandleMenuBar(const std::vector<TMenuItemData>& _vItems)
     }
 
     // Nothing clicked
-    return MENU_ITEM_NONE;
+    return iReturn;
 }
 
 //

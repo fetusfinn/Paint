@@ -1,0 +1,78 @@
+//
+//	line.cpp
+//
+#include "line.h"
+
+//
+// Updates the line as we draw, main functionality
+//
+void CLine::Update(const sf::RenderWindow& _rWindow)
+{
+	// Reset the line each tick
+	m_rLine.clear();
+
+	// If drawing the line
+	if (m_bDrawing)
+	{
+		// Store the mouse's pos for the end point so we draw a line between
+		// points while the user is still deciding where to actually end the line
+		m_rEndPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
+	}
+
+	// Add the two end of our line to the vertex array
+	m_rLine.append(sf::Vertex(m_rStartPos, sf::Color::Red));
+	m_rLine.append(sf::Vertex(m_rEndPos, sf::Color::Red));
+}
+
+//
+// Called when the user clicks
+//
+void CLine::OnClick(const sf::RenderWindow& _rWindow)
+{
+	// Already drawing
+	if (m_bDrawing)
+		return;
+
+	// Then store the mouse's position to use as our starting
+	// point for our line
+	m_rStartPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
+
+	// Start to draw the line
+	m_bDrawing = true;
+}
+
+//
+// Called when the user releases the mouse
+//
+void CLine::OnRelease()
+{
+	// Then we should draw the line to our texture/canvas to finialise it
+	m_bShouldPlace = true;
+
+	// And stop drawing the temp line
+	m_bDrawing = false;
+}
+
+//
+// Draws the either the placeholder line or the real one
+//
+void CLine::Draw(sf::RenderWindow& _rWindow, sf::RenderTarget* _pRenderTex)
+{
+	if (m_bDrawing)
+	{
+		// If we're still drawing the line then
+		// draw a placeholder from the origin to the mouse
+		_rWindow.draw(m_rLine);
+	}
+	else if (m_bShouldPlace)
+	{
+		// Finished drawing so now draw the final line
+		// to our texture to set it in stone
+		_pRenderTex->draw(m_rLine);
+
+		// Line has been placed
+		m_bShouldPlace = false;
+	}
+}
+
+
