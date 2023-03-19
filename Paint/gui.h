@@ -50,6 +50,12 @@ private:
 	// List of all the items to draw to the window
 	std::vector<sf::Drawable*> m_pDrawables;
 
+	// Whether the mouse was released this tick
+	bool m_bMouseReleased;
+
+	// Whether the mouse is currently being clicked
+	bool m_bMouseDownLast;
+
 	bool InArea(int x, int y, int w, int h);
 
 	bool Button(const std::string& _strLabel);

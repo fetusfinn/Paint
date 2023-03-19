@@ -185,7 +185,6 @@ int main()
 	vMenuItems.emplace_back(TMenuItemData(2, "Colours",		4));
 	vMenuItems.emplace_back(TMenuItemData(1, "Width 1",		5));
 	vMenuItems.emplace_back(TMenuItemData(1, "Clear",		6));
-
 	// TODO : 
 	// vMenuItems.push_back(TMenuItem(1, "Polygon",		7));
 	// vMenuItems.push_back(TMenuItem(1, "Free draw",	8));

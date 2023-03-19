@@ -25,7 +25,7 @@ void CLine::Update(const sf::RenderWindow& _rWindow)
 	float fAngle = atan2f(fDifference.y, fDifference.x) * 180 / M_PI;
 
 	// Calculate the distance between
-	float fDist = sqrtf(std::pow(fDifference.x, 2) + std::pow(fDifference.y, 1));
+	float fDist = sqrtf(std::pow(fDifference.x, 2) + std::pow(fDifference.y, 2));
 
 	// Set the transformations
 	m_rLine.setPosition(m_rStartPos);

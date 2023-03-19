@@ -36,6 +36,20 @@ void CGui::Draw()
 //
 int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems)
 {
+    if (IsMouseClicked())
+    {
+        m_bMouseDownLast = true;
+    }
+    else
+    {
+	    if (m_bMouseDownLast)
+	    {
+            m_bMouseDownLast = false;
+
+            m_bMouseReleased = true;
+	    }
+    }
+
     int iReturn = _iLastSelection;
 
     // Loop thru our menu items and draw them
@@ -144,7 +158,7 @@ bool CGui::Button(const std::string& _strLabel)
 
         // Change colour if clicked
         if (IsMouseClicked())
-            tBoxCol = sf::Color(170, 170, 170);
+        	tBoxCol = sf::Color(170, 170, 170);
     }
 
     // Our box shape
