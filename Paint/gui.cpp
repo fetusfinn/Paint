@@ -1,7 +1,33 @@
 //
 //  gui.cpp
 //
+#include "globals.h"
 #include "gui.h"
+
+// Colour with an RBG value that isn't the same as one of
+// our colour picker colours, so we can figure out if
+// the user has actually picked a colour or not
+static const sf::Color g_rColourInvalid(123, 123, 123);
+
+//
+// Processes mouse clicks, stores to bools for use within the class
+//
+void CGui::HandleMouseClicks()
+{
+    if (IsMouseClicked())
+    {
+        m_bMouseDownLast = true;
+    }
+    else
+    {
+        if (m_bMouseDownLast)
+        {
+            m_bMouseDownLast = false;
+
+            m_bMouseReleased = true;
+        }
+    }
+}
 
 //
 // Draws the menu to the window
@@ -34,23 +60,16 @@ void CGui::Draw()
 //
 // Generate the shapes for the menu bar and handle its items inputs
 //
-int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems)
+int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems, const std::vector<sf::Color>& _vColours)
 {
-    if (IsMouseClicked())
-    {
-        m_bMouseDownLast = true;
-    }
-    else
-    {
-	    if (m_bMouseDownLast)
-	    {
-            m_bMouseDownLast = false;
+    // Handle our mouse clicks
+    HandleMouseClicks();
 
-            m_bMouseReleased = true;
-	    }
-    }
-
+    // What we want to return
     int iReturn = _iLastSelection;
+
+    // The colour returned from our colour picker
+    sf::Color rCol;
 
     // Loop thru our menu items and draw them
     for (TMenuItemData rItem : _vItems)
@@ -68,9 +87,20 @@ int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _
 
         case 2: // MENU_ITEM_COLOUR
 	        {
-		        // TODO : 
+                // This should only be called once
+
+                // Get the colour
+	            rCol = ColourPicker(_vColours);
+
+                // Update our draw colour if the user chose a new colour
+                if (rCol != g_rColourInvalid)
+                {
+                    g_rBrushColour = rCol;
+
+                    debug("Colour updated");
+                }
 	        }
-            break;
+        	break;
 
         default:
         case 0: // MENU_ITEM_INVALID
@@ -133,7 +163,7 @@ bool CGui::Button(const std::string& _strLabel)
     int y = 0;
 
     // Dimensions and position of our button
-    const int w = 70, h = 30;
+    const int w = 80, h = 30;
 
     // Create our label
     sf::Text* pLabel = Label(x + 10, y + 5, _strLabel);
@@ -148,24 +178,24 @@ bool CGui::Button(const std::string& _strLabel)
     m_tOffset.x += w;
 
     // The fill colour of our box
-    sf::Color tBoxCol = sf::Color::White;
+    sf::Color rBoxCol = sf::Color::White;
 
     // Check if hovering
     if (InArea(x, y, w, h))
     {
         // Change colour if hovering
-        tBoxCol = sf::Color(200, 200, 200);
+        rBoxCol = sf::Color(200, 200, 200);
 
         // Change colour if clicked
         if (IsMouseClicked())
-        	tBoxCol = sf::Color(170, 170, 170);
+            rBoxCol = sf::Color(170, 170, 170);
     }
 
     // Our box shape
     sf::RectangleShape* pRect = new sf::RectangleShape(sf::Vector2f(w, h));
 
     pRect->setPosition(x, y);
-    pRect->setFillColor(tBoxCol);
+    pRect->setFillColor(rBoxCol);
     pRect->setOutlineColor(sf::Color(40, 40, 40));
     pRect->setOutlineThickness(-1);
 
@@ -176,4 +206,73 @@ bool CGui::Button(const std::string& _strLabel)
 
     // return value = was the button clicked?
     return InArea(x, y, w, h) && IsMouseClicked();
+}
+
+//
+// Create a button for us to draw and add functionality
+//
+sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
+{
+    // Get the position
+    int x = m_tOffset.x;
+    int y = 0;
+
+    // Dimensions of each individual colour bxo
+    const int w = 15, h = 15;
+
+    // Whether or not we're on the bottom row
+    bool bBottom = false;
+
+    // Set its RGB to one that isnt one of our colours so we can
+    // tell if a colour was chosen 
+    sf::Color rReturn = g_rColourInvalid;
+
+    sf::Color rOutline(40, 40, 40);
+
+    // Loop thru all colours and draw their box
+    for (int i = 0; i < _vColours.size(); i++)
+    {
+        sf::RectangleShape* pRect = new sf::RectangleShape(sf::Vector2f(w, h));
+
+        // Check if we're on the bottom row
+        bBottom = (i % 2 == 1);
+
+        // Get x position
+        x = m_tOffset.x;
+
+        // Every second colour box is drawn on the bottom row
+        y = bBottom ? 15 : 0;
+
+        // Check if hovering
+        if (InArea(x, y, w, h))
+        {
+            // Change colour if hovering
+            rOutline = sf::Color(200, 200, 200);
+
+            // Change colour if clicked
+            if (IsMouseClicked())
+            {
+                rOutline = sf::Color(170, 170, 170);
+            }
+        }
+        else
+        {
+            rOutline = sf::Color(40, 40, 40);
+        }
+
+
+        pRect->setPosition(x, y);
+        pRect->setFillColor(_vColours.at(i));
+        pRect->setOutlineColor(rOutline);
+        pRect->setOutlineThickness(-1);
+
+        m_pDrawables.push_back(pRect);
+
+        // If we're on the bottom row, offset so we can move onto
+        // the next column of colours
+        if (bBottom)
+            m_tOffset.x += w;
+    }
+
+    return rReturn;
 }

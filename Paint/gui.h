@@ -56,10 +56,13 @@ private:
 	// Whether the mouse is currently being clicked
 	bool m_bMouseDownLast;
 
+	void HandleMouseClicks();
+
 	bool InArea(int x, int y, int w, int h);
 
 	bool Button(const std::string& _strLabel);
 	sf::Text* Label(int x, int y, const std::string& _strLabel);
+	sf::Color ColourPicker(const std::vector<sf::Color>& _vColours);
 
 public:
 
@@ -74,7 +77,7 @@ public:
 
 	void Draw();
 
-	int HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems);
+	int HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems, const std::vector<sf::Color>& _vColours);
 };
 
 //

@@ -5,6 +5,8 @@
 
 #define _USE_MATH_DEFINES	// So we can access M_PI
 
+#include <iostream>
+
 #include <SFML/Graphics.hpp>
 
 // The size of our brush
@@ -12,3 +14,6 @@ extern float g_fBrushSize;
 
 // The colour we want to draw with
 extern sf::Color g_rBrushColour;
+
+// Print macro
+#define debug(msg) std::cout << "[debug] " << msg << std::endl

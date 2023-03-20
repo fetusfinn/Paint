@@ -1,7 +1,6 @@
 //
 //	Paint
 //
-#include <iostream>
 #include <sstream>
 
 #include "globals.h"
@@ -13,7 +12,7 @@
 #include "ellipse.h"
 
 
-#define debug(msg) std::cout << "[debug] " << msg << std::endl
+
 
 //
 // The different brush types
@@ -26,6 +25,24 @@ enum EBrushType
 	BRUSH_ELLIPSE,
 	BRUSH_FREE,
 	BRUSH_POLY,
+};
+
+//
+// The different indices for our menu items
+//
+enum EMenuIndex
+{
+	MENU_INDEX_INVALID = 0,
+	MENU_INDEX_LINE,
+	MENU_INDEX_RECT,
+	MENU_INDEX_ELLIPSE,
+	MENU_INDEX_BRUSH_SIZE,
+	MENU_INDEX_CLEAR,
+	MENU_INDEX_COLOURS,
+
+	// TODO
+	MENU_INDEX_POLY,
+	MENU_INDEX_FREE,
 };
 
 // The brush we want to use
@@ -70,40 +87,40 @@ void ResetScreenAndWindowSize()
 //
 // Handles the menu selection
 //
-int HandleMenuSelection(int _iSelection, CGui& _rGui, const std::vector<TMenuItemData>& _vMenuItems, sf::RenderTexture* _pRenderTex)
+int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRenderTex, const std::vector<TMenuItemData>& _vMenuItems, const std::vector<sf::Color> _vColours)
 {
 	// Generate our menu and handle the user's selection
-	int iMenuSelection = _rGui.HandleMenuBar(_iSelection, _vMenuItems);
+	int iMenuSelection = _rGui.HandleMenuBar(_iSelection, _vMenuItems, _vColours);
 
 	// Now handle the user's selection
 	switch (iMenuSelection)
 	{
-	case 0:
+	case MENU_INDEX_INVALID:
 		g_eBrushType = BRUSH_NONE;
 		break;
 
-	case 1:
+	case MENU_INDEX_LINE:
 		g_eBrushType = BRUSH_LINE;
 		break;
 
-	case 2:
+	case MENU_INDEX_RECT:
 		g_eBrushType = BRUSH_RECT;
 		break;
 
-	case 3:
+	case MENU_INDEX_ELLIPSE:
 		g_eBrushType = BRUSH_ELLIPSE;
 		break;
 
-	case 4:
-		// TODO : Colour picker
+	case MENU_INDEX_COLOURS:
+		// Functionality is done in CGui::HandleMenuBar()
 		break;
 
-	case 5:
+	case MENU_INDEX_BRUSH_SIZE:
 		// Change brush size
 		// Functionality is done elsewhere
 		break;
 
-	case 6:
+	case MENU_INDEX_CLEAR:
 		// Clear the screen so just reset the texture
 		_pRenderTex->clear(sf::Color::White);
 
@@ -179,17 +196,31 @@ int main()
 	std::vector<TMenuItemData> vMenuItems;
 
 	// Add them all 
-	vMenuItems.emplace_back(TMenuItemData(1, "Line",		1));
-	vMenuItems.emplace_back(TMenuItemData(1, "Rectangle",	2));
-	vMenuItems.emplace_back(TMenuItemData(1, "Ellipse",		3));
-	vMenuItems.emplace_back(TMenuItemData(2, "Colours",		4));
-	vMenuItems.emplace_back(TMenuItemData(1, "Width 1",		5));
-	vMenuItems.emplace_back(TMenuItemData(1, "Clear",		6));
-	// TODO : 
-	// vMenuItems.push_back(TMenuItem(1, "Polygon",		7));
-	// vMenuItems.push_back(TMenuItem(1, "Free draw",	8));
+	vMenuItems.emplace_back(TMenuItemData(1,	"Line",				MENU_INDEX_LINE));
+	vMenuItems.emplace_back(TMenuItemData(1,	"Rectangle",		MENU_INDEX_RECT));
+	vMenuItems.emplace_back(TMenuItemData(1,	"Ellipse",			MENU_INDEX_ELLIPSE));
+	vMenuItems.emplace_back(TMenuItemData(1,	"Brush size: 1",	MENU_INDEX_BRUSH_SIZE));
+	vMenuItems.emplace_back(TMenuItemData(1,	"Clear",			MENU_INDEX_CLEAR));
+	// TODO 
+	// vMenuItems.push_back(TMenuItem(1, "Polygon",		MENU_INDEX_POLY));
+	// vMenuItems.push_back(TMenuItem(1, "Free draw",	MENU_INDEX_FREE));
+
+	// Colours are done last so theyre drawn at the end of our menu
+	vMenuItems.emplace_back(TMenuItemData(2, "Colours", MENU_INDEX_COLOURS));
 
 
+	// Colours for our colour picker
+	std::vector<sf::Color> vColours = 
+	{
+		sf::Color::White,
+		sf::Color::Black,
+		sf::Color::Red,
+		sf::Color::Green,
+		sf::Color::Blue,
+		sf::Color::Yellow,
+		sf::Color::Magenta,
+		sf::Color::Cyan,
+	};
 
 	// Our currnt selection for the menu
 	int iMenuSelection = 0;
@@ -200,15 +231,17 @@ int main()
 	// Main loop
 	while (bRunning)
 	{
+		// Handle SFML events
 		sf::Event rEvent;
 		while (rWindow.pollEvent(rEvent))
 		{
+			// Properly close the window
 			if (rEvent.type == sf::Event::Closed)
 				rWindow.close();
 		}
 
 		// Get the menu selection
-		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, vMenuItems, pRenderTex);
+		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, pRenderTex, vMenuItems, vColours);
 		
 
 
@@ -297,20 +330,23 @@ int main()
 
 
 				// If change brush size was selected
-				if (iMenuSelection == 5)
+				if (iMenuSelection == MENU_INDEX_BRUSH_SIZE)
 				{
 					ChangeBrushSize();
 
-					std::stringstream ss;
+					// The label for our width button on our menu
+					// so we can update it as we go, using a
+					// stringstream so we can set precision
+					std::stringstream ssWidthLabel;
 
-					// Dont want any trailing 0s since g_fBrushSize if a float
-					ss.precision(0);
+					// Dont want any trailing 0s since g_fBrushSize is a float
+					ssWidthLabel.precision(0);
 
 					// Build the string
-					ss << "Width " << g_fBrushSize + 1;
+					ssWidthLabel << "Brush size: " << g_fBrushSize + 1;
 
 					// Update the label
-					vMenuItems.at(4).m_strLabel = ss.str();
+					vMenuItems.at(MENU_INDEX_BRUSH_SIZE - 1).m_strLabel = ssWidthLabel.str();
 
 					// Brush size changed, change selection so we dont change the
 					// brush size again when we click
