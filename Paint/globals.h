@@ -53,5 +53,5 @@ namespace Global
 		return sf::Mouse::isButtonPressed(sf::Mouse::Left);
 	}
 
-	bool InArea(float x, float y, float w, float h, const sf::RenderWindow& _rWindow);
+	extern bool InArea(float x, float y, float w, float h, const sf::RenderWindow& _rWindow);
 }

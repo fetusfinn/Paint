@@ -25,12 +25,10 @@ public:
 
 	CPolygon() { }
 
-	void Update(const sf::RenderWindow& _rWindow);
+	void Update(const sf::RenderWindow& _rWindow, bool _bCleared);
 
 	void OnClick(const sf::RenderWindow& _rWindow);
 	void OnRelease();
 
 	void Draw(sf::RenderWindow& _rWindow, sf::RenderTarget* _pRenderTex);
-
-	void Reset();
 };

@@ -21,14 +21,18 @@ private:
 	// and finalise the transformation(s)
 	bool m_bShouldPlace = false;
 
+	// To stop us from drawing when we dont want to
+	bool m_bCancel = false;
+
 public:
 
 	CLine() { }
 
-	void Update(const sf::RenderWindow& _rWindow);
+	void Update(const sf::RenderWindow& _rWindow, bool _bCleared);
 
 	void OnClick(const sf::RenderWindow& _rWindow);
 	void OnRelease();
+
 
 	void Draw(sf::RenderWindow& _rWindow, sf::RenderTarget* _pRenderTex);
 

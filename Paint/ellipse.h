@@ -21,6 +21,12 @@ private:
 	// and finalise the transformation(s)
 	bool m_bShouldPlace = false;
 
+	// To stop us from drawing when we dont want to
+	bool m_bCancel = false;
+
+	// Whether or not we just placed a shape
+	bool m_bJustPlaced = false;
+
 public:
 
 	//
@@ -32,7 +38,7 @@ public:
 		m_rEllipse.setPointCount(50);
 	}
 
-	void Update(const sf::RenderWindow& _rWindow);
+	void Update(const sf::RenderWindow& _rWindow, bool _bCleared);
 
 	void OnClick(const sf::RenderWindow& _rWindow);
 	void OnRelease();

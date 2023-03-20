@@ -8,15 +8,20 @@
 //
 // Updates the shape as we draw, main functionality
 //
-void CEllipse::Update(const sf::RenderWindow& _rWindow)
+void CEllipse::Update(const sf::RenderWindow& _rWindow, bool _bCleared)
 {
-	// If drawing the shape
-	if (m_bDrawing)
-	{
-		// Store the mouse's pos for the end point so we draw a shape between
-		// points while the user is still deciding where to actually end the shape
-		m_rEndPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
-	}
+	if (_bCleared)
+		m_bCancel = true;
+
+	if (m_bCancel)
+		return;
+
+	if (!m_bDrawing)
+		return;
+
+	// Store the mouse's pos for the end point so we draw a shape between
+	// points while the user is still deciding where to actually end the shape
+	m_rEndPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
 
 	// The diameter of the ellipes on it's two axes
 	sf::Vector2f rDiameter = m_rEndPos - m_rStartPos; 
@@ -62,6 +67,10 @@ void CEllipse::OnClick(const sf::RenderWindow& _rWindow)
 	if (Global::InArea(0, 0, Global::rExclusionZone.x, Global::rExclusionZone.y, _rWindow))
 		return;
 
+	// Stop cancelling 
+	if (m_bCancel)
+		m_bCancel = false;
+
 	// Then store the mouse's position to use as our starting
 	// point for our shape
 	m_rStartPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
@@ -87,6 +96,10 @@ void CEllipse::OnRelease()
 //
 void CEllipse::Draw(sf::RenderWindow& _rWindow, sf::RenderTarget* _pRenderTex)
 {
+	if (m_bCancel)
+		return;
+
+
 	if (m_bDrawing)
 	{
 		// If we're still drawing the shape then

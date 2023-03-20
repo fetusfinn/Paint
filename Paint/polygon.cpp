@@ -6,26 +6,20 @@
 #include "polygon.h"
 
 //
-// Resets the polygons points, we use this because when we click
-// on a button it will place a new point which we dont want
-//
-void CPolygon::Reset()
-{
-	// Already been reset no need to do again 
-	if (m_vPoints.size() == 0 && m_rPoly.getPointCount() == 0)
-		return;
-
-	m_rPoly.setPointCount(0);
-	m_vPoints.clear();
-	m_bDrawing = false;
-	m_bShouldPlace = false;
-}
-
-//
 // Updates the line as we draw, main functionality
 //
-void CPolygon::Update(const sf::RenderWindow& _rWindow)
+void CPolygon::Update(const sf::RenderWindow& _rWindow, bool _bCleared)
 {
+	if (_bCleared)
+	{
+		m_bDrawing = false;
+		m_bShouldPlace = false;
+
+		m_vPoints.clear();
+
+		return;
+	}
+
 	// Place the poly when the user holds down right click
 	if (Global::iClickCounter > 1000)
 		m_bShouldPlace = true;

@@ -209,11 +209,6 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 		break;
 
 	case MENU_INDEX_CLEAR:
-		// Clear the screen so just reset the texture
-		_pRenderTex->clear(sf::Color::White);
-
-		// After clearing change back to our last brush
-		iMenuSelection = GetLastMenuSelection();
 		break;
 	}
 
@@ -253,7 +248,7 @@ void ChangeBrushSize(TMenuItemData& _rMenuItem)
 //
 // Updates the brush stroke for the our selected brush
 //
-void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse, CPolygon& _rPoly)
+void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse, CPolygon& _rPoly, bool _bCleared)
 {
 	switch (Global::eBrushType)
 	{
@@ -261,19 +256,19 @@ void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectan
 		break;
 
 	case BRUSH_LINE:
-		_rLine.Update(_rWindow);
+		_rLine.Update(_rWindow, _bCleared);
 		break;
 
 	case BRUSH_RECT:
-		_rRect.Update(_rWindow);
+		_rRect.Update(_rWindow, _bCleared);
 		break;
 
 	case BRUSH_ELLIPSE:
-		_rEllipse.Update(_rWindow);
+		_rEllipse.Update(_rWindow, _bCleared);
 		break;
 
 	case BRUSH_POLY:
-		_rPoly.Update(_rWindow);
+		_rPoly.Update(_rWindow, _bCleared);
 		break;
 	}
 }
@@ -427,12 +422,19 @@ int main()
 	// Our currnt selection for the menu
 	int iMenuSelection = 0;
 
+	// Whether or not we cleared the screen this tick
+	bool bClearedThisTick = false;
+
 	// Whether or not the app should run
 	bool bRunning = true;
 
 	// Main loop
 	while (bRunning)
 	{
+		// Reset this
+		bClearedThisTick = false;
+
+		// 
 		if (HasScreenSizeChanged())
 		{
 			// TODO : resize
@@ -454,8 +456,19 @@ int main()
 		// Get the menu selection
 		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, pRenderTex, vMenuItems, vColours);
 
+		if (iMenuSelection == MENU_INDEX_CLEAR)
+		{
+			// Clear the screen so just reset the texture
+			pRenderTex->clear(sf::Color::White);
+
+			// After clearing change back to our last brush
+			iMenuSelection = GetLastMenuSelection();
+
+			bClearedThisTick = true;
+		}
+
 		// Draw with selected brush type
-		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse, rPoly);
+		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse, rPoly, bClearedThisTick);
 
 		// Do stuff if we clicked or released
 		if (Global::WasMouseJustClicked())
