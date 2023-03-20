@@ -6,15 +6,15 @@
 #include "rect.h"
 
 //
-// Updates the line as we draw, main functionality
+// Updates the shape as we draw, main functionality
 //
 void CRectangle::Update(const sf::RenderWindow& _rWindow)
 {
-	// If drawing the line
+	// If drawing the shape
 	if (m_bDrawing)
 	{
-		// Store the mouse's pos for the end point so we draw a line between
-		// points while the user is still deciding where to actually end the line
+		// Store the mouse's pos for the end point so we draw a shape between
+		// points while the user is still deciding where to actually end the shape
 		m_rEndPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
 	}
 
@@ -36,11 +36,15 @@ void CRectangle::OnClick(const sf::RenderWindow& _rWindow)
 	if (m_bDrawing)
 		return;
 
+	// Dont let the user draw on the menu bar
+	if (Global::InArea(0, 0, Global::rExclusionZone.x, Global::rExclusionZone.y, _rWindow))
+		return;
+
 	// Then store the mouse's position to use as our starting
-	// point for our line
+	// point for our shape
 	m_rStartPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));
 
-	// Start to draw the line
+	// Start to draw the shape
 	m_bDrawing = true;
 }
 
@@ -49,31 +53,31 @@ void CRectangle::OnClick(const sf::RenderWindow& _rWindow)
 //
 void CRectangle::OnRelease()
 {
-	// Then we should draw the line to our texture/canvas to finialise it
+	// Then we should draw the shape to our texture/canvas to finialise it
 	m_bShouldPlace = true;
 
-	// And stop drawing the temp line
+	// And stop drawing the temp shape
 	m_bDrawing = false;
 }
 
 //
-// Draws the either the placeholder line or the real one
+// Draws the either the placeholder shape or the real one
 //
 void CRectangle::Draw(sf::RenderWindow& _rWindow, sf::RenderTarget* _pRenderTex)
 {
 	if (m_bDrawing)
 	{
-		// If we're still drawing the line then
+		// If we're still drawing the shape then
 		// draw a placeholder from the origin to the mouse
 		_rWindow.draw(m_rRect);
 	}
 	else if (m_bShouldPlace)
 	{
-		// Finished drawing so now draw the final line
+		// Finished drawing so now draw the final shape
 		// to our texture to set it in stone
 		_pRenderTex->draw(m_rRect);
 
-		// Line has been placed
+		// Shape has been placed
 		m_bShouldPlace = false;
 	}
 }

@@ -9,6 +9,7 @@
 #include "line.h"
 #include "rect.h"
 #include "ellipse.h"
+#include "polygon.h"
 
 #include "globals.h"
 
@@ -21,7 +22,6 @@ enum EBrushType
 	BRUSH_LINE,
 	BRUSH_RECT,
 	BRUSH_ELLIPSE,
-	BRUSH_FREE,
 	BRUSH_POLY,
 };
 
@@ -34,13 +34,11 @@ enum EMenuIndex
 	MENU_INDEX_LINE,
 	MENU_INDEX_RECT,
 	MENU_INDEX_ELLIPSE,
+	MENU_INDEX_POLY,
 	MENU_INDEX_BRUSH_SIZE,
 	MENU_INDEX_CLEAR,
+	MENU_INDEX_SAVE,		// TODO
 	MENU_INDEX_COLOURS,
-
-	// TODO
-	MENU_INDEX_POLY,
-	MENU_INDEX_FREE,
 };
 
 namespace Global
@@ -69,6 +67,30 @@ namespace Global
 
 	// To keep track of how long the user holds click
 	int iClickCounter = 0;
+
+	// The area where the user shouldnt be able to draw
+	// which is just the menu bar
+	sf::Vector2f rExclusionZone;
+}
+
+//
+// Returns true if the mouse is within the given area
+//
+bool Global::InArea(float x, float y, float w, float h, const sf::RenderWindow& _rWindow)
+{
+	bool bRet = false;
+
+	sf::Vector2i tMousePos = sf::Mouse::getPosition(_rWindow);
+
+	// mouse within x range
+	if (tMousePos.x >= x && tMousePos.x <= (x + w))
+	{
+		// mouse within y range
+		if (tMousePos.y >= y && tMousePos.y <= (y + h))
+			bRet = true;
+	}
+
+	return bRet;
 }
 
 //
@@ -139,6 +161,9 @@ int GetLastMenuSelection()
 
 	case BRUSH_ELLIPSE:
 		return MENU_INDEX_ELLIPSE;
+
+	case BRUSH_POLY:
+		return MENU_INDEX_POLY;
 	}
 
 	return 0;
@@ -169,6 +194,10 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 
 	case MENU_INDEX_ELLIPSE:
 		Global::eBrushType = BRUSH_ELLIPSE;
+		break;
+
+	case MENU_INDEX_POLY:
+		Global::eBrushType = BRUSH_POLY;
 		break;
 
 	case MENU_INDEX_COLOURS:
@@ -224,7 +253,7 @@ void ChangeBrushSize(TMenuItemData& _rMenuItem)
 //
 // Updates the brush stroke for the our selected brush
 //
-void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse, CPolygon& _rPoly)
 {
 	switch (Global::eBrushType)
 	{
@@ -243,12 +272,8 @@ void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectan
 		_rEllipse.Update(_rWindow);
 		break;
 
-	// TODO
-
 	case BRUSH_POLY:
-		break;
-
-	case BRUSH_FREE:
+		_rPoly.Update(_rWindow);
 		break;
 	}
 }
@@ -256,40 +281,85 @@ void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectan
 //
 // Called when the user clicks the mouse
 //
-void OnClick(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+void OnClick(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse, CPolygon& _rPoly)
 {
-	if (Global::eBrushType == BRUSH_LINE)
+	switch (Global::eBrushType)
+	{
+	case BRUSH_NONE:
+		break;
+
+	case BRUSH_LINE:
 		_rLine.OnClick(_rWindow);
-	else if (Global::eBrushType == BRUSH_RECT)
+		break;
+
+	case BRUSH_RECT:
 		_rRect.OnClick(_rWindow);
-	else if (Global::eBrushType == BRUSH_ELLIPSE)
+		break;
+
+	case BRUSH_ELLIPSE:
 		_rEllipse.OnClick(_rWindow);
+		break;
+
+	case BRUSH_POLY:
+		_rPoly.OnClick(_rWindow);
+		break;
+	}
 }
 
 //
 // Called when the user releases the mouse
 //
-void OnRelease(CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+void OnRelease(CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse, CPolygon& _rPoly)
 {
-	if (Global::eBrushType == BRUSH_LINE)
+	switch (Global::eBrushType)
+	{
+	case BRUSH_NONE:
+		break;
+
+	case BRUSH_LINE:
 		_rLine.OnRelease();
-	else if (Global::eBrushType == BRUSH_RECT)
+		break;
+
+	case BRUSH_RECT:
 		_rRect.OnRelease();
-	else if (Global::eBrushType == BRUSH_ELLIPSE)
+		break;
+
+	case BRUSH_ELLIPSE:
 		_rEllipse.OnRelease();
+		break;
+
+	case BRUSH_POLY:
+		_rPoly.OnRelease();
+		break;
+	}
 }
 
 //
 // Draws our selected shape
 //
-void DrawShapes(sf::RenderWindow& _rWindow, sf::RenderTexture* _pRenderTex, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+void DrawShapes(sf::RenderWindow& _rWindow, sf::RenderTexture* _pRenderTex, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse, CPolygon& _rPoly)
 {
-	if (Global::eBrushType == BRUSH_LINE)
+	switch (Global::eBrushType)
+	{
+	case BRUSH_NONE:
+		break;
+
+	case BRUSH_LINE:
 		_rLine.Draw(_rWindow, _pRenderTex);
-	else if (Global::eBrushType == BRUSH_RECT)
+		break;
+
+	case BRUSH_RECT:
 		_rRect.Draw(_rWindow, _pRenderTex);
-	else if (Global::eBrushType == BRUSH_ELLIPSE)
+		break;
+
+	case BRUSH_ELLIPSE:
 		_rEllipse.Draw(_rWindow, _pRenderTex);
+		break;
+
+	case BRUSH_POLY:
+		_rPoly.Draw(_rWindow, _pRenderTex);
+		break;
+	}
 }
 
 //
@@ -303,7 +373,7 @@ int main()
 	// Our main paint window
 	sf::RenderWindow rWindow(sf::VideoMode(Global::iWindowWidth, Global::iWindowHeight), "Paint");
 
-	// To draw texture 
+	// Our texture to draw to
 	sf::RenderTexture* pRenderTex = new sf::RenderTexture();
 
 	pRenderTex->create(rWindow.getSize().x, rWindow.getSize().y);
@@ -321,6 +391,7 @@ int main()
 	CLine rLine;
 	CRectangle rRect;
 	CEllipse rEllipse;
+	CPolygon rPoly;
 
 	// Our gui object
 	CGui rGui(&rWindow);
@@ -331,17 +402,13 @@ int main()
 		TMenuItemData(1, "Line",			MENU_INDEX_LINE),
 		TMenuItemData(1, "Rectangle",		MENU_INDEX_RECT),
 		TMenuItemData(1, "Ellipse",			MENU_INDEX_ELLIPSE),
+		TMenuItemData(1, "Polygon",		MENU_INDEX_POLY),
 		TMenuItemData(1, "Brush size: 1",	MENU_INDEX_BRUSH_SIZE),
 		TMenuItemData(1, "Clear",			MENU_INDEX_CLEAR),
-
-		// TODO
-		// TMenuItemData(1, "Polygon",		MENU_INDEX_POLY),
-		// TMenuItemData(1, "Free draw",		MENU_INDEX_FREE),
 
 		// Colours are done last so theyre drawn at the end of our menu
 		TMenuItemData(2, "Colours",			MENU_INDEX_COLOURS),
 	};
-
 
 	// Colours for our colour picker
 	std::vector<sf::Color> vColours = 
@@ -380,19 +447,20 @@ int main()
 				rWindow.close();
 		}
 
+		// Handle all the left clicks, do this first so all the other functions
+		// can use the Global:: members and functions
+		HandleMouseClicks();
+
 		// Get the menu selection
 		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, pRenderTex, vMenuItems, vColours);
 
-		// Handle all the left clicks
-		HandleMouseClicks();
-
 		// Draw with selected brush type
-		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse);
+		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse, rPoly);
 
 		// Do stuff if we clicked or released
 		if (Global::WasMouseJustClicked())
 		{
-			OnClick(rWindow, rLine, rRect, rEllipse);
+			OnClick(rWindow, rLine, rRect, rEllipse, rPoly);
 
 			// If change brush size was selected
 			if (iMenuSelection == MENU_INDEX_BRUSH_SIZE)
@@ -406,7 +474,7 @@ int main()
 		}
 		else if (Global::bMouseReleased)
 		{
-			OnRelease(rLine, rRect, rEllipse);
+			OnRelease(rLine, rRect, rEllipse, rPoly);
 		}
 
 		// Clear the window
@@ -416,7 +484,7 @@ int main()
 		rWindow.draw(*pCanvas);
 
 		// Draw our shapes
-		DrawShapes(rWindow, pRenderTex, rLine, rRect, rEllipse);
+		DrawShapes(rWindow, pRenderTex, rLine, rRect, rEllipse, rPoly);
 
 		// Draw our GUI last so its on top of everything else
 		rGui.Draw();

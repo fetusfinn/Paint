@@ -41,22 +41,18 @@ private:
 
 	// Menu offset, used to automatically calculate the next
 	// menu items position
-	struct TOffset
-	{
-		int x, y;
-
-	}	m_tOffset;
+	sf::Vector2f m_rOffset;
 
 	// Our menu font 
 	sf::Font m_rFont;
 
-
 	// Whether the colour picker is open
 	bool m_bColourOpen;
 
-	bool InArea(int x, int y, int w, int h);
+
+	//bool InArea(float x, float y, float w, float h);
 	bool Button(const std::string& _strLabel);
-	sf::Text* Label(int x, int y, const std::string& _strLabel);
+	sf::Text* Label(float x, float y, const std::string& _strLabel);
 	sf::Color ColourPicker(const std::vector<sf::Color>& _vColours);
 
 public:

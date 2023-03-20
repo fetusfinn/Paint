@@ -29,6 +29,10 @@ namespace Global
 	// To keep track of how long the user holds click
 	extern int iClickCounter;
 
+	// The area where the user shouldnt be able to draw
+	// which is just the menu bar
+	extern sf::Vector2f rExclusionZone;
+
 	// Inlined functions because they are tiny
 
 	//
@@ -48,4 +52,6 @@ namespace Global
 	{
 		return sf::Mouse::isButtonPressed(sf::Mouse::Left);
 	}
+
+	bool InArea(float x, float y, float w, float h, const sf::RenderWindow& _rWindow);
 }

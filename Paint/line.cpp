@@ -43,6 +43,10 @@ void CLine::OnClick(const sf::RenderWindow& _rWindow)
 	if (m_bDrawing)
 		return;
 
+	// Dont let the user draw on the menu bar
+	if (Global::InArea(0, 0, Global::rExclusionZone.x, Global::rExclusionZone.y, _rWindow))
+		return;
+
 	// Then store the mouse's position to use as our starting
 	// point for our line
 	m_rStartPos = sf::Vector2f(sf::Mouse::getPosition(_rWindow));

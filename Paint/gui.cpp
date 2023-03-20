@@ -13,7 +13,7 @@ static const sf::Color g_rColourInvalid(123, 123, 123);
 //
 // Constructor
 //
-CGui::CGui(sf::RenderWindow* _pWindow) : m_pWindow(_pWindow), m_tOffset({ 0,0 })
+CGui::CGui(sf::RenderWindow* _pWindow) : m_pWindow(_pWindow), m_rOffset({ 0,0 }), m_bColourOpen(false)
 {
     // Load our font, maybe make this static or global
     m_rFont.loadFromFile("fonts/arial.ttf");
@@ -63,7 +63,7 @@ void CGui::Draw()
     m_pDrawables.clear();
 
     // Reset the menu offset
-	m_tOffset = { 0 , 0 };
+    m_rOffset = { 0 , 0 };
 }
 
 //
@@ -112,34 +112,17 @@ int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _
         }
     }
 
+    // Set to the size of the menu
+    Global::rExclusionZone = sf::Vector2f(m_rOffset.x, 30);
+
     // Nothing clicked
     return iReturn;
 }
 
 //
-// Returns true if the mouse is within the given area
-//
-bool CGui::InArea(int x, int y, int w, int h)
-{
-    bool bRet = false;
-
-    sf::Vector2i tMousePos = sf::Mouse::getPosition(*m_pWindow);
-
-    // mouse within x range
-    if (tMousePos.x >= x && tMousePos.x <= (x + w))
-    {
-	    // mouse within y range
-        if (tMousePos.y >= y && tMousePos.y <= (y + h))
-            bRet = true;
-    }
-
-    return bRet;
-}
-
-//
 // Create a label for us to draw
 //
-sf::Text* CGui::Label(int x, int y, const std::string& _strLabel)
+sf::Text* CGui::Label(float x, float y, const std::string& _strLabel)
 {
     sf::Text* pText = new sf::Text();
 
@@ -161,11 +144,11 @@ sf::Text* CGui::Label(int x, int y, const std::string& _strLabel)
 bool CGui::Button(const std::string& _strLabel)
 {
     // Get this buttons position
-    int x = m_tOffset.x;
-    int y = 0;
+    float x = m_rOffset.x;
+    float y = 0;
 
     // Dimensions and position of our button
-    const int w = 80, h = 30;
+    const float w = 80, h = 30;
 
     // Create our label
     sf::Text* pLabel = Label(x + 10, y + 5, _strLabel);
@@ -179,7 +162,7 @@ bool CGui::Button(const std::string& _strLabel)
     // Offset the next item along the X axis
     // -1 so that the outlines on each side overlap and stop them
     // from looking thicker than they should
-    m_tOffset.x += w - 1;
+    m_rOffset.x += w - 1;
 
     // The fill colour of our box
     sf::Color rBoxCol = sf::Color::White;
@@ -188,7 +171,7 @@ bool CGui::Button(const std::string& _strLabel)
     bool bReturn = false;
 
     // Check if hovering
-    if (InArea(x, y, w, h))
+    if (Global::InArea(x, y, w, h, *m_pWindow))
     {
         // Change colour if hovering
         rBoxCol = sf::Color(200, 200, 200);
@@ -212,7 +195,7 @@ bool CGui::Button(const std::string& _strLabel)
     m_pDrawables.push_back(pLabel);
 
     // return value = was the button clicked?
-    return InArea(x, y, w, h) && Global::WasMouseJustClicked();
+    return Global::InArea(x, y, w, h, *m_pWindow) && Global::WasMouseJustClicked();
 }
 
 //
@@ -221,11 +204,11 @@ bool CGui::Button(const std::string& _strLabel)
 sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
 {
     // Get the position
-    int x = m_tOffset.x;
-    int y = 0;
+    float x = m_rOffset.x;
+    float y = 0;
 
     // Dimensions of each individual colour box
-    const int w = 30, h = 30;
+    const float w = 30, h = 30;
 
     // Set its RGB to one that isnt one of our colours so we can
     // tell if a colour was chosen 
@@ -235,7 +218,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
     sf::Color rOutline(40, 40, 40);
 
     // Check if hovering in the main box
-    if (InArea(x, y, w, h))
+    if (Global::InArea(x, y, w, h, *m_pWindow))
     {
         // Open/close the colour picker when mouse clicked
         if (Global::WasMouseJustClicked())
@@ -252,7 +235,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
 
     m_pDrawables.push_back(pButtonRect);
 
-    m_tOffset.x += w - 1;
+    m_rOffset.x += w - 1;
 
 
     if (m_bColourOpen)
@@ -264,10 +247,10 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
             sf::RectangleShape* pColourRect = new sf::RectangleShape(sf::Vector2f(w, h));
 
             // Get x position
-            x = m_tOffset.x;
+            x = m_rOffset.x;
 
             // Check if hovering
-            if (InArea(x, y, w, h))
+            if (Global::InArea(x, y, w, h, *m_pWindow))
             {
                 // Update the colour on release
                 if (Global::WasMouseJustClicked())
@@ -298,7 +281,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
 
             m_pDrawables.push_back(pColourRect);
 
-            m_tOffset.x += w - 1;
+            m_rOffset.x += w - 1;
         }
     }
 
