@@ -36,6 +36,9 @@ private:
 	// Our main window
 	sf::RenderWindow* m_pWindow;
 
+	// List of all the items to draw to the window
+	std::vector<sf::Drawable*> m_pDrawables;
+
 	// Menu offset, used to automatically calculate the next
 	// menu items position
 	struct TOffset
@@ -47,45 +50,21 @@ private:
 	// Our menu font 
 	sf::Font m_rFont;
 
-	// List of all the items to draw to the window
-	std::vector<sf::Drawable*> m_pDrawables;
 
-	// Whether the mouse was released this tick
-	bool m_bMouseReleased;
-
-	// Whether the mouse is currently being clicked
-	bool m_bMouseDownLast;
-
-	void HandleMouseClicks();
+	// Whether the colour picker is open
+	bool m_bColourOpen;
 
 	bool InArea(int x, int y, int w, int h);
-
 	bool Button(const std::string& _strLabel);
 	sf::Text* Label(int x, int y, const std::string& _strLabel);
 	sf::Color ColourPicker(const std::vector<sf::Color>& _vColours);
 
 public:
 
-	//
-	// Constructor
-	//
-	CGui(sf::RenderWindow* _pWindow) : m_pWindow(_pWindow), m_tOffset({0,0})
-	{
-		// Load our font, maybe make this static or global
-		m_rFont.loadFromFile("fonts/arial.ttf");
-	}
+	CGui(sf::RenderWindow* _pWindow);
+	~CGui();
 
 	void Draw();
 
 	int HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems, const std::vector<sf::Color>& _vColours);
 };
-
-//
-// Returns true if the left mouse button is down, placed in the header
-// so that the function gets inlined, and because it is used in both
-// gui.cpp and main.cpp
-//
-inline bool IsMouseClicked()
-{
-	return sf::Mouse::isButtonPressed(sf::Mouse::Left);
-}

@@ -3,16 +3,13 @@
 //
 #include <sstream>
 
-#include "globals.h"
-
 #include "gui.h"
 
 #include "line.h"
 #include "rect.h"
 #include "ellipse.h"
 
-
-
+#include "globals.h"
 
 //
 // The different brush types
@@ -60,15 +57,62 @@ int g_iScreenWidth, g_iScreenHeight;
 // The size of our window
 int g_iWindowWidth, g_iWindowHeight;
 
+// TODO : move to globals.h
+// TODO : use a namespace
+
+// Whether or not the mouse is currently clicked
+bool g_bMouseDown = false;
+
+// Whether or not the mouse was released this tick
+bool g_bMouseReleased = false;
+
+// To keep track of how long the user holds click
+int g_iClickCounter = 0;
+
+//
+// Handles all left click events
+//
+void HandleMouseClicks()
+{
+	g_bMouseReleased = false;
+
+	if (IsMouseClicked())
+	{
+		g_bMouseDown = true;
+
+		// Increase the click counter
+		g_iClickCounter++;
+	}
+	else
+	{
+		if (g_bMouseDown)
+		{
+			g_bMouseDown = false;
+
+			g_iClickCounter = 0;
+
+			g_bMouseReleased = true;
+		}
+	}
+}
+
+//
+// Returns true if the mouse was clicked this tick
+//
+bool WasMouseJustClicked()
+{
+	return g_iClickCounter == 1;
+}
+
+//
+// Returns true if the screen size has changed
+// Currently unused, TODO
+//
 bool HasScreenSizeChanged()
 {
-	static int iLastScreenWidth = 0, iLastScreenHeight = 0;
+	sf::VideoMode rScreen = sf::VideoMode::getDesktopMode();
 
-	iLastScreenWidth = g_iScreenWidth;
-	iLastScreenHeight = g_iScreenHeight;
-
-
-	return false;
+	return g_iScreenWidth != rScreen.width || g_iScreenHeight != rScreen.height;
 }
 
 //
@@ -82,6 +126,28 @@ void ResetScreenAndWindowSize()
 	// Window should be half both dimensions of the screen
 	g_iWindowWidth  = g_iScreenWidth / 2;
 	g_iWindowHeight = g_iScreenHeight / 2;
+}
+
+//
+// Returns the last selection we had
+// Only used when iMenuSelection is set to 0
+//
+int GetLastMenuSelection()
+{
+
+	switch (g_eBrushType)
+	{
+	case BRUSH_LINE:
+		return MENU_INDEX_LINE;
+
+	case BRUSH_RECT:
+		return MENU_INDEX_RECT;
+
+	case BRUSH_ELLIPSE:
+		return MENU_INDEX_ELLIPSE;
+	}
+
+	return 0;
 }
 
 //
@@ -124,29 +190,113 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 		// Clear the screen so just reset the texture
 		_pRenderTex->clear(sf::Color::White);
 
-		// Only want to clear once
-		iMenuSelection = 0;
+		// After clearing change back to our last brush
+		iMenuSelection = GetLastMenuSelection();
 		break;
 	}
 
 	return iMenuSelection;
 }
 
-
 //
-// Change the brush size
+// Change the brush size and update the button's label
 //
-void ChangeBrushSize()
+void ChangeBrushSize(TMenuItemData& _rMenuItem)
 {
 	// Move to the next brush size
 	g_fBrushSize++;
 
 	// -1 because we're counting from 0
-	static const int kMaxBrushSize = 4;
+	static constexpr int kMaxBrushSize = 4;
 
 	// Loop thru the brush sizes
 	if (g_fBrushSize > kMaxBrushSize)
 		g_fBrushSize = 0;
+
+	// The label for our width button on our menu
+	// so we can update it as we go, using a
+	// stringstream so we can set precision
+	std::stringstream ssWidthLabel;
+
+	// Dont want any trailing 0s since g_fBrushSize is a float
+	ssWidthLabel.precision(0);
+
+	// Build the string
+	ssWidthLabel << "Brush size: " << g_fBrushSize + 1;
+
+	// Update the label
+	_rMenuItem.m_strLabel = ssWidthLabel.str();
+}
+
+//
+// Updates the brush stroke for the our selected brush
+//
+void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+{
+	switch (g_eBrushType)
+	{
+	case BRUSH_NONE:
+		break;
+
+	case BRUSH_LINE:
+		_rLine.Update(_rWindow);
+		break;
+
+	case BRUSH_RECT:
+		_rRect.Update(_rWindow);
+		break;
+
+	case BRUSH_ELLIPSE:
+		_rEllipse.Update(_rWindow);
+		break;
+
+	// TODO
+
+	case BRUSH_POLY:
+		break;
+
+	case BRUSH_FREE:
+		break;
+	}
+}
+
+//
+// Called when the user clicks the mouse
+//
+void OnClick(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+{
+	if (g_eBrushType == BRUSH_LINE)
+		_rLine.OnClick(_rWindow);
+	else if (g_eBrushType == BRUSH_RECT)
+		_rRect.OnClick(_rWindow);
+	else if (g_eBrushType == BRUSH_ELLIPSE)
+		_rEllipse.OnClick(_rWindow);
+}
+
+//
+// Called when the user releases the mouse
+//
+void OnRelease(CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+{
+	if (g_eBrushType == BRUSH_LINE)
+		_rLine.OnRelease();
+	else if (g_eBrushType == BRUSH_RECT)
+		_rRect.OnRelease();
+	else if (g_eBrushType == BRUSH_ELLIPSE)
+		_rEllipse.OnRelease();
+}
+
+//
+// Draws our selected shape
+//
+void DrawShapes(sf::RenderWindow& _rWindow, sf::RenderTexture* _pRenderTex, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
+{
+	if (g_eBrushType == BRUSH_LINE)
+		_rLine.Draw(_rWindow, _pRenderTex);
+	else if (g_eBrushType == BRUSH_RECT)
+		_rRect.Draw(_rWindow, _pRenderTex);
+	else if (g_eBrushType == BRUSH_ELLIPSE)
+		_rEllipse.Draw(_rWindow, _pRenderTex);
 }
 
 //
@@ -160,28 +310,18 @@ int main()
 	// Our main paint window
 	sf::RenderWindow rWindow(sf::VideoMode(g_iWindowWidth, g_iWindowHeight), "Paint");
 
-
 	// To draw texture 
 	sf::RenderTexture* pRenderTex = new sf::RenderTexture();
+
 	pRenderTex->create(rWindow.getSize().x, rWindow.getSize().y);
 	pRenderTex->clear(sf::Color::White);
 	pRenderTex->display();
 
 	// Our canvas to draw the texture too
 	sf::RectangleShape* pCanvas = new sf::RectangleShape(sf::Vector2f(rWindow.getSize().x, rWindow.getSize().y));
+
 	pCanvas->setTexture(&pRenderTex->getTexture());
 
-	// Whether or not our mouse was pressed last tick
-	bool bMouseDownLast = false;
-
-
-
-	// Used to free draw lines
-	sf::VertexArray rCurrentLine;
-	rCurrentLine.setPrimitiveType(sf::LineStrip);
-
-	// The last position of our mouse
-	sf::Vector2i rPrevMousePos(0, 0);
 
 
 	// Our shapes
@@ -193,20 +333,21 @@ int main()
 	CGui rGui(&rWindow);
 
 	// Our menu bar items
-	std::vector<TMenuItemData> vMenuItems;
+	std::vector<TMenuItemData> vMenuItems =
+	{
+		TMenuItemData(1, "Line",			MENU_INDEX_LINE),
+		TMenuItemData(1, "Rectangle",		MENU_INDEX_RECT),
+		TMenuItemData(1, "Ellipse",			MENU_INDEX_ELLIPSE),
+		TMenuItemData(1, "Brush size: 1",	MENU_INDEX_BRUSH_SIZE),
+		TMenuItemData(1, "Clear",			MENU_INDEX_CLEAR),
 
-	// Add them all 
-	vMenuItems.emplace_back(TMenuItemData(1,	"Line",				MENU_INDEX_LINE));
-	vMenuItems.emplace_back(TMenuItemData(1,	"Rectangle",		MENU_INDEX_RECT));
-	vMenuItems.emplace_back(TMenuItemData(1,	"Ellipse",			MENU_INDEX_ELLIPSE));
-	vMenuItems.emplace_back(TMenuItemData(1,	"Brush size: 1",	MENU_INDEX_BRUSH_SIZE));
-	vMenuItems.emplace_back(TMenuItemData(1,	"Clear",			MENU_INDEX_CLEAR));
-	// TODO 
-	// vMenuItems.push_back(TMenuItem(1, "Polygon",		MENU_INDEX_POLY));
-	// vMenuItems.push_back(TMenuItem(1, "Free draw",	MENU_INDEX_FREE));
+		// TODO
+		// TMenuItemData(1, "Polygon",		MENU_INDEX_POLY),
+		// TMenuItemData(1, "Free draw",		MENU_INDEX_FREE),
 
-	// Colours are done last so theyre drawn at the end of our menu
-	vMenuItems.emplace_back(TMenuItemData(2, "Colours", MENU_INDEX_COLOURS));
+		// Colours are done last so theyre drawn at the end of our menu
+		TMenuItemData(2, "Colours",			MENU_INDEX_COLOURS),
+	};
 
 
 	// Colours for our colour picker
@@ -220,6 +361,7 @@ int main()
 		sf::Color::Yellow,
 		sf::Color::Magenta,
 		sf::Color::Cyan,
+		// Can add more if we want
 	};
 
 	// Our currnt selection for the menu
@@ -231,6 +373,11 @@ int main()
 	// Main loop
 	while (bRunning)
 	{
+		if (HasScreenSizeChanged())
+		{
+			// TODO : resize
+		}
+
 		// Handle SFML events
 		sf::Event rEvent;
 		while (rWindow.pollEvent(rEvent))
@@ -242,149 +389,46 @@ int main()
 
 		// Get the menu selection
 		iMenuSelection = HandleMenuSelection(iMenuSelection, rGui, pRenderTex, vMenuItems, vColours);
-		
 
+		// Handle all the left clicks
+		HandleMouseClicks();
 
 		// Draw with selected brush type
-		switch (g_eBrushType)
+		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse);
+
+		// Do stuff if we clicked or released
+		if (WasMouseJustClicked())
 		{
-		case BRUSH_NONE:
-			break;
+			OnClick(rWindow, rLine, rRect, rEllipse);
 
-		case BRUSH_LINE:
-			rLine.Update(rWindow);
-			break;
-
-		case BRUSH_RECT:
-			rRect.Update(rWindow);
-			break;
-
-		case BRUSH_ELLIPSE:
-			rEllipse.Update(rWindow);
-			break;
-
-		case BRUSH_POLY:
+			// If change brush size was selected
+			if (iMenuSelection == MENU_INDEX_BRUSH_SIZE)
 			{
-				// TODO 
-			}
-			break;
+				ChangeBrushSize(vMenuItems.at(MENU_INDEX_BRUSH_SIZE - 1));
 
-		case BRUSH_FREE:
-			{
-				// TODO 
-				if (IsMouseClicked())
-				{
-					// Free draw stuff
-					auto mouse_pos = sf::Mouse::getPosition(rWindow);
-					if (rPrevMousePos != mouse_pos)
-					{
-						rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x, mouse_pos.y), sf::Color::Red));
-
-						for (int i = 0; i < g_fBrushSize; i++)
-						{
-							rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x + i, mouse_pos.y), sf::Color::Red));
-							rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x - i, mouse_pos.y), sf::Color::Red));
-							rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x, mouse_pos.y + i), sf::Color::Red));
-							rCurrentLine.append(sf::Vertex(sf::Vector2f(mouse_pos.x, mouse_pos.y - i), sf::Color::Red));
-						}
-
-						rPrevMousePos = mouse_pos;
-					}
-				}
-			}
-			break;
-
-		default:
-			break;
-		}
-
-
-
-		// Mouse click stuff
-		if (IsMouseClicked())
-		{
-			// If the mouse is clicked then is is down this tick
-			bMouseDownLast = true;
-
-			if (g_eBrushType == BRUSH_LINE)
-				rLine.OnClick(rWindow);
-			else if (g_eBrushType == BRUSH_RECT)
-				rRect.OnClick(rWindow);
-			else if (g_eBrushType == BRUSH_ELLIPSE)
-				rEllipse.OnClick(rWindow);
-		}
-		else
-		{
-			// Mouse was released
-			if (bMouseDownLast)
-			{
-				bMouseDownLast = false;
-
-				if (g_eBrushType == BRUSH_LINE)
-					rLine.OnRelease();
-				else if (g_eBrushType == BRUSH_RECT)
-					rRect.OnRelease();
-				else if (g_eBrushType == BRUSH_ELLIPSE)
-					rEllipse.OnRelease();
-
-
-
-				// If change brush size was selected
-				if (iMenuSelection == MENU_INDEX_BRUSH_SIZE)
-				{
-					ChangeBrushSize();
-
-					// The label for our width button on our menu
-					// so we can update it as we go, using a
-					// stringstream so we can set precision
-					std::stringstream ssWidthLabel;
-
-					// Dont want any trailing 0s since g_fBrushSize is a float
-					ssWidthLabel.precision(0);
-
-					// Build the string
-					ssWidthLabel << "Brush size: " << g_fBrushSize + 1;
-
-					// Update the label
-					vMenuItems.at(MENU_INDEX_BRUSH_SIZE - 1).m_strLabel = ssWidthLabel.str();
-
-					// Brush size changed, change selection so we dont change the
-					// brush size again when we click
-					iMenuSelection = 0;
-				}
-
-				// Then clear our free draw line
-				rCurrentLine.clear();
-
+				// Change the menu selection back to the brush we were using
+				// so that we can keep drawing
+				iMenuSelection = GetLastMenuSelection();
 			}
 		}
+		else if (g_bMouseReleased)
+		{
+			OnRelease(rLine, rRect, rEllipse);
+		}
 
-
-
-
-		
 		// Clear the window
 		rWindow.clear(sf::Color::White);
 
 		// Draw the canvas first so that we can draw our placeholder shapes on top of it
 		rWindow.draw(*pCanvas);
 
-		// Draw everything
-		{
-			// Draw our shapes
-			if (g_eBrushType == BRUSH_LINE)
-				rLine.Draw(rWindow, pRenderTex);
-			else if (g_eBrushType == BRUSH_RECT)
-				rRect.Draw(rWindow, pRenderTex);
-			else if (g_eBrushType == BRUSH_ELLIPSE)
-				rEllipse.Draw(rWindow, pRenderTex);
+		// Draw our shapes
+		DrawShapes(rWindow, pRenderTex, rLine, rRect, rEllipse);
 
+		// Draw our GUI last so its on top of everything else
+		rGui.Draw();
 
-
-
-			// Draw our GUI last so its on top of everything else
-			rGui.Draw();
-		}
+		// Display it all
 		rWindow.display();
 
 		// If the window was close this frame then stop running

@@ -15,15 +15,15 @@ private:
 	sf::Vector2f m_rStartPos, m_rEndPos;
 
 	// Whether or not we are drawing our shape
-	bool m_bDrawing;
+	bool m_bDrawing = false;
 
 	// Whether or not we should draw the shape to our texture 
 	// and finalise the transformation(s)
-	bool m_bShouldPlace;
+	bool m_bShouldPlace = false;
 
 public:
 
-	CRectangle() : m_bDrawing(false), m_bShouldPlace(false) { }
+	CRectangle() { }
 
 	void Update(const sf::RenderWindow& _rWindow);
 

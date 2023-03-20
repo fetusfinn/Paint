@@ -2,6 +2,7 @@
 //  gui.cpp
 //
 #include "globals.h"
+
 #include "gui.h"
 
 // Colour with an RBG value that isn't the same as one of
@@ -10,23 +11,31 @@
 static const sf::Color g_rColourInvalid(123, 123, 123);
 
 //
-// Processes mouse clicks, stores to bools for use within the class
+// Constructor
 //
-void CGui::HandleMouseClicks()
+CGui::CGui(sf::RenderWindow* _pWindow) : m_pWindow(_pWindow), m_tOffset({ 0,0 })
 {
-    if (IsMouseClicked())
-    {
-        m_bMouseDownLast = true;
-    }
-    else
-    {
-        if (m_bMouseDownLast)
-        {
-            m_bMouseDownLast = false;
+    // Load our font, maybe make this static or global
+    m_rFont.loadFromFile("fonts/arial.ttf");
+}
 
-            m_bMouseReleased = true;
-        }
-    }
+//
+// Destructor
+// 
+CGui::~CGui()
+{
+    // Delete all the remaining pointers
+	for (sf::Drawable* pDrawable : m_pDrawables)
+	{
+		if (pDrawable)
+		{
+            delete pDrawable;
+            pDrawable = nullptr;
+		}
+	}
+
+    // Clear the vector
+    m_pDrawables.clear();
 }
 
 //
@@ -62,9 +71,6 @@ void CGui::Draw()
 //
 int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _vItems, const std::vector<sf::Color>& _vColours)
 {
-    // Handle our mouse clicks
-    HandleMouseClicks();
-
     // What we want to return
     int iReturn = _iLastSelection;
 
@@ -94,11 +100,7 @@ int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _
 
                 // Update our draw colour if the user chose a new colour
                 if (rCol != g_rColourInvalid)
-                {
                     g_rBrushColour = rCol;
-
-                    debug("Colour updated");
-                }
 	        }
         	break;
 
@@ -175,10 +177,15 @@ bool CGui::Button(const std::string& _strLabel)
     pLabel->setPosition(x + (w / 2) - ((rTextBounds.width * 0.2f) / 2), y + (h / 2) - ((rTextBounds.height * 0.2f) / 2) - 3);
 
     // Offset the next item along the X axis
-    m_tOffset.x += w;
+    // -1 so that the outlines on each side overlap and stop them
+    // from looking thicker than they should
+    m_tOffset.x += w - 1;
 
     // The fill colour of our box
     sf::Color rBoxCol = sf::Color::White;
+
+    // Our return value
+    bool bReturn = false;
 
     // Check if hovering
     if (InArea(x, y, w, h))
@@ -205,7 +212,7 @@ bool CGui::Button(const std::string& _strLabel)
     m_pDrawables.push_back(pLabel);
 
     // return value = was the button clicked?
-    return InArea(x, y, w, h) && IsMouseClicked();
+    return InArea(x, y, w, h) && WasMouseJustClicked();
 }
 
 //
@@ -217,61 +224,82 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
     int x = m_tOffset.x;
     int y = 0;
 
-    // Dimensions of each individual colour bxo
-    const int w = 15, h = 15;
-
-    // Whether or not we're on the bottom row
-    bool bBottom = false;
+    // Dimensions of each individual colour box
+    const int w = 30, h = 30;
 
     // Set its RGB to one that isnt one of our colours so we can
     // tell if a colour was chosen 
     sf::Color rReturn = g_rColourInvalid;
 
+    // The outline colour for each box
     sf::Color rOutline(40, 40, 40);
 
-    // Loop thru all colours and draw their box
-    for (int i = 0; i < _vColours.size(); i++)
+    // Check if hovering in the main box
+    if (InArea(x, y, w, h))
     {
-        sf::RectangleShape* pRect = new sf::RectangleShape(sf::Vector2f(w, h));
+        // Open/close the colour picker when mouse clicked
+        if (WasMouseJustClicked())
+            m_bColourOpen = !m_bColourOpen;
+    }
 
-        // Check if we're on the bottom row
-        bBottom = (i % 2 == 1);
+    // The shape for the main button
+    sf::RectangleShape* pButtonRect = new sf::RectangleShape(sf::Vector2f(w, h));
 
-        // Get x position
-        x = m_tOffset.x;
+    pButtonRect->setPosition(x, y);
+    pButtonRect->setFillColor(g_rBrushColour);
+    pButtonRect->setOutlineColor(rOutline);
+    pButtonRect->setOutlineThickness(-1);
 
-        // Every second colour box is drawn on the bottom row
-        y = bBottom ? 15 : 0;
+    m_pDrawables.push_back(pButtonRect);
 
-        // Check if hovering
-        if (InArea(x, y, w, h))
+    m_tOffset.x += w - 1;
+
+
+    if (m_bColourOpen)
+    {
+        // Loop thru all colours and draw their box
+        for (int i = 0; i < _vColours.size(); i++)
         {
-            // Change colour if hovering
-            rOutline = sf::Color(200, 200, 200);
+            // The shape for the individual colours
+            sf::RectangleShape* pColourRect = new sf::RectangleShape(sf::Vector2f(w, h));
 
-            // Change colour if clicked
-            if (IsMouseClicked())
+            // Get x position
+            x = m_tOffset.x;
+
+            // Check if hovering
+            if (InArea(x, y, w, h))
             {
-                rOutline = sf::Color(170, 170, 170);
+                // Update the colour on release
+                if (WasMouseJustClicked())
+                {
+                    // If a colour hasnt already been chosen
+                    // then set the return colour
+                    if (rReturn == g_rColourInvalid)
+                        rReturn = _vColours.at(i);
+
+                    m_bColourOpen = false;
+                }
             }
+            else
+            {
+                rOutline = sf::Color(40, 40, 40);
+            }
+
+            // If the current colour is our selected colour
+            // then give it a different outline
+            if (g_rBrushColour == _vColours.at(i))
+                rOutline = sf::Color(100, 100, 100);
+
+
+            pColourRect->setPosition(x, y);
+            pColourRect->setFillColor(_vColours.at(i));
+            pColourRect->setOutlineColor(rOutline);
+            pColourRect->setOutlineThickness(-1);
+
+            m_pDrawables.push_back(pColourRect);
+
+            m_tOffset.x += w - 1;
         }
-        else
-        {
-            rOutline = sf::Color(40, 40, 40);
-        }
-
-
-        pRect->setPosition(x, y);
-        pRect->setFillColor(_vColours.at(i));
-        pRect->setOutlineColor(rOutline);
-        pRect->setOutlineThickness(-1);
-
-        m_pDrawables.push_back(pRect);
-
-        // If we're on the bottom row, offset so we can move onto
-        // the next column of colours
-        if (bBottom)
-            m_tOffset.x += w;
     }
 
     return rReturn;
