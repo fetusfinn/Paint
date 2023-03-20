@@ -29,9 +29,9 @@ void CLine::Update(const sf::RenderWindow& _rWindow)
 
 	// Set the transformations
 	m_rLine.setPosition(m_rStartPos);
-	m_rLine.setSize(sf::Vector2f(fDist, (g_fBrushSize * 2) + 1));
+	m_rLine.setSize(sf::Vector2f(fDist, (Global::fBrushSize * 2) + 1));
 	m_rLine.setRotation(fAngle);
-	m_rLine.setFillColor(g_rBrushColour);
+	m_rLine.setFillColor(Global::rBrushColour);
 }
 
 //

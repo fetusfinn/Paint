@@ -24,7 +24,7 @@ void CRectangle::Update(const sf::RenderWindow& _rWindow)
 	m_rRect.setPosition(m_rStartPos);
 	m_rRect.setSize(rSize);
 
-	m_rRect.setFillColor(g_rBrushColour);
+	m_rRect.setFillColor(Global::rBrushColour);
 }
 
 //

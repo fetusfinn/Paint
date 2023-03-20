@@ -46,7 +46,7 @@ void CEllipse::Update(const sf::RenderWindow& _rWindow)
 ;
 	// Set the position
 	m_rEllipse.setPosition(rDrawPos);
-	m_rEllipse.setFillColor(g_rBrushColour);
+	m_rEllipse.setFillColor(Global::rBrushColour);
 }
 
 //

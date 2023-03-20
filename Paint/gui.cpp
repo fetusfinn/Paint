@@ -100,7 +100,7 @@ int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _
 
                 // Update our draw colour if the user chose a new colour
                 if (rCol != g_rColourInvalid)
-                    g_rBrushColour = rCol;
+                    Global::rBrushColour = rCol;
 	        }
         	break;
 
@@ -194,7 +194,7 @@ bool CGui::Button(const std::string& _strLabel)
         rBoxCol = sf::Color(200, 200, 200);
 
         // Change colour if clicked
-        if (IsMouseClicked())
+        if (Global::IsMouseClicked())
             rBoxCol = sf::Color(170, 170, 170);
     }
 
@@ -212,7 +212,7 @@ bool CGui::Button(const std::string& _strLabel)
     m_pDrawables.push_back(pLabel);
 
     // return value = was the button clicked?
-    return InArea(x, y, w, h) && WasMouseJustClicked();
+    return InArea(x, y, w, h) && Global::WasMouseJustClicked();
 }
 
 //
@@ -238,7 +238,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
     if (InArea(x, y, w, h))
     {
         // Open/close the colour picker when mouse clicked
-        if (WasMouseJustClicked())
+        if (Global::WasMouseJustClicked())
             m_bColourOpen = !m_bColourOpen;
     }
 
@@ -246,7 +246,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
     sf::RectangleShape* pButtonRect = new sf::RectangleShape(sf::Vector2f(w, h));
 
     pButtonRect->setPosition(x, y);
-    pButtonRect->setFillColor(g_rBrushColour);
+    pButtonRect->setFillColor(Global::rBrushColour);
     pButtonRect->setOutlineColor(rOutline);
     pButtonRect->setOutlineThickness(-1);
 
@@ -270,7 +270,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
             if (InArea(x, y, w, h))
             {
                 // Update the colour on release
-                if (WasMouseJustClicked())
+                if (Global::WasMouseJustClicked())
                 {
                     // If a colour hasnt already been chosen
                     // then set the return colour
@@ -287,7 +287,7 @@ sf::Color CGui::ColourPicker(const std::vector<sf::Color>& _vColours)
 
             // If the current colour is our selected colour
             // then give it a different outline
-            if (g_rBrushColour == _vColours.at(i))
+            if (Global::rBrushColour == _vColours.at(i))
                 rOutline = sf::Color(100, 100, 100);
 
 

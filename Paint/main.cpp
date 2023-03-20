@@ -1,5 +1,6 @@
 //
 //	Paint
+//	Finn Le Var
 //
 #include <sstream>
 
@@ -42,66 +43,59 @@ enum EMenuIndex
 	MENU_INDEX_FREE,
 };
 
-// The brush we want to use
-EBrushType g_eBrushType = BRUSH_LINE;
+namespace Global
+{
+	// The brush we want to use
+	// Static beacuse its only used in this file
+	static EBrushType eBrushType = BRUSH_LINE;
 
-// The size of our brush
-float g_fBrushSize = 0;
+	// The size of our brush
+	float fBrushSize = 0;
 
-// The colour we want to draw with
-sf::Color g_rBrushColour = sf::Color::Black;
+	// The colour we want to draw with
+	sf::Color rBrushColour = sf::Color::Black;
 
-// The size of the user's screen
-int g_iScreenWidth, g_iScreenHeight;
+	// The size of the user's screen
+	int iScreenWidth, iScreenHeight;
 
-// The size of our window
-int g_iWindowWidth, g_iWindowHeight;
+	// The size of our window
+	int iWindowWidth, iWindowHeight;
 
-// TODO : move to globals.h
-// TODO : use a namespace
+	// Whether or not the mouse is currently clicked
+	bool bMouseDown = false;
 
-// Whether or not the mouse is currently clicked
-bool g_bMouseDown = false;
+	// Whether or not the mouse was released this tick
+	bool bMouseReleased = false;
 
-// Whether or not the mouse was released this tick
-bool g_bMouseReleased = false;
-
-// To keep track of how long the user holds click
-int g_iClickCounter = 0;
+	// To keep track of how long the user holds click
+	int iClickCounter = 0;
+}
 
 //
 // Handles all left click events
 //
 void HandleMouseClicks()
 {
-	g_bMouseReleased = false;
+	Global::bMouseReleased = false;
 
-	if (IsMouseClicked())
+	if (Global::IsMouseClicked())
 	{
-		g_bMouseDown = true;
+		Global::bMouseDown = true;
 
 		// Increase the click counter
-		g_iClickCounter++;
+		Global::iClickCounter++;
 	}
 	else
 	{
-		if (g_bMouseDown)
+		if (Global::bMouseDown)
 		{
-			g_bMouseDown = false;
+			Global::bMouseDown = false;
 
-			g_iClickCounter = 0;
+			Global::iClickCounter = 0;
 
-			g_bMouseReleased = true;
+			Global::bMouseReleased = true;
 		}
 	}
-}
-
-//
-// Returns true if the mouse was clicked this tick
-//
-bool WasMouseJustClicked()
-{
-	return g_iClickCounter == 1;
 }
 
 //
@@ -112,7 +106,7 @@ bool HasScreenSizeChanged()
 {
 	sf::VideoMode rScreen = sf::VideoMode::getDesktopMode();
 
-	return g_iScreenWidth != rScreen.width || g_iScreenHeight != rScreen.height;
+	return Global::iScreenWidth != rScreen.width || Global::iScreenHeight != rScreen.height;
 }
 
 //
@@ -120,12 +114,12 @@ bool HasScreenSizeChanged()
 //
 void ResetScreenAndWindowSize()
 {
-	g_iScreenWidth  = sf::VideoMode::getDesktopMode().width;
-	g_iScreenHeight = sf::VideoMode::getDesktopMode().height;
+	Global::iScreenWidth  = sf::VideoMode::getDesktopMode().width;
+	Global::iScreenHeight = sf::VideoMode::getDesktopMode().height;
 
 	// Window should be half both dimensions of the screen
-	g_iWindowWidth  = g_iScreenWidth / 2;
-	g_iWindowHeight = g_iScreenHeight / 2;
+	Global::iWindowWidth  = Global::iScreenWidth / 2;
+	Global::iWindowHeight = Global::iScreenHeight / 2;
 }
 
 //
@@ -135,7 +129,7 @@ void ResetScreenAndWindowSize()
 int GetLastMenuSelection()
 {
 
-	switch (g_eBrushType)
+	switch (Global::eBrushType)
 	{
 	case BRUSH_LINE:
 		return MENU_INDEX_LINE;
@@ -162,19 +156,19 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 	switch (iMenuSelection)
 	{
 	case MENU_INDEX_INVALID:
-		g_eBrushType = BRUSH_NONE;
+		Global::eBrushType = BRUSH_NONE;
 		break;
 
 	case MENU_INDEX_LINE:
-		g_eBrushType = BRUSH_LINE;
+		Global::eBrushType = BRUSH_LINE;
 		break;
 
 	case MENU_INDEX_RECT:
-		g_eBrushType = BRUSH_RECT;
+		Global::eBrushType = BRUSH_RECT;
 		break;
 
 	case MENU_INDEX_ELLIPSE:
-		g_eBrushType = BRUSH_ELLIPSE;
+		Global::eBrushType = BRUSH_ELLIPSE;
 		break;
 
 	case MENU_INDEX_COLOURS:
@@ -182,8 +176,7 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 		break;
 
 	case MENU_INDEX_BRUSH_SIZE:
-		// Change brush size
-		// Functionality is done elsewhere
+		// Functionality is done in ChangeBrushSize()
 		break;
 
 	case MENU_INDEX_CLEAR:
@@ -204,25 +197,25 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 void ChangeBrushSize(TMenuItemData& _rMenuItem)
 {
 	// Move to the next brush size
-	g_fBrushSize++;
+	Global::fBrushSize++;
 
 	// -1 because we're counting from 0
 	static constexpr int kMaxBrushSize = 4;
 
 	// Loop thru the brush sizes
-	if (g_fBrushSize > kMaxBrushSize)
-		g_fBrushSize = 0;
+	if (Global::fBrushSize > kMaxBrushSize)
+		Global::fBrushSize = 0;
 
 	// The label for our width button on our menu
 	// so we can update it as we go, using a
 	// stringstream so we can set precision
 	std::stringstream ssWidthLabel;
 
-	// Dont want any trailing 0s since g_fBrushSize is a float
+	// Dont want any trailing 0s since Global::fBrushSize is a float
 	ssWidthLabel.precision(0);
 
 	// Build the string
-	ssWidthLabel << "Brush size: " << g_fBrushSize + 1;
+	ssWidthLabel << "Brush size: " << Global::fBrushSize + 1;
 
 	// Update the label
 	_rMenuItem.m_strLabel = ssWidthLabel.str();
@@ -233,7 +226,7 @@ void ChangeBrushSize(TMenuItemData& _rMenuItem)
 //
 void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
 {
-	switch (g_eBrushType)
+	switch (Global::eBrushType)
 	{
 	case BRUSH_NONE:
 		break;
@@ -265,11 +258,11 @@ void UpdateBrushStrokes(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectan
 //
 void OnClick(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
 {
-	if (g_eBrushType == BRUSH_LINE)
+	if (Global::eBrushType == BRUSH_LINE)
 		_rLine.OnClick(_rWindow);
-	else if (g_eBrushType == BRUSH_RECT)
+	else if (Global::eBrushType == BRUSH_RECT)
 		_rRect.OnClick(_rWindow);
-	else if (g_eBrushType == BRUSH_ELLIPSE)
+	else if (Global::eBrushType == BRUSH_ELLIPSE)
 		_rEllipse.OnClick(_rWindow);
 }
 
@@ -278,11 +271,11 @@ void OnClick(const sf::RenderWindow& _rWindow, CLine& _rLine, CRectangle& _rRect
 //
 void OnRelease(CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
 {
-	if (g_eBrushType == BRUSH_LINE)
+	if (Global::eBrushType == BRUSH_LINE)
 		_rLine.OnRelease();
-	else if (g_eBrushType == BRUSH_RECT)
+	else if (Global::eBrushType == BRUSH_RECT)
 		_rRect.OnRelease();
-	else if (g_eBrushType == BRUSH_ELLIPSE)
+	else if (Global::eBrushType == BRUSH_ELLIPSE)
 		_rEllipse.OnRelease();
 }
 
@@ -291,11 +284,11 @@ void OnRelease(CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
 //
 void DrawShapes(sf::RenderWindow& _rWindow, sf::RenderTexture* _pRenderTex, CLine& _rLine, CRectangle& _rRect, CEllipse& _rEllipse)
 {
-	if (g_eBrushType == BRUSH_LINE)
+	if (Global::eBrushType == BRUSH_LINE)
 		_rLine.Draw(_rWindow, _pRenderTex);
-	else if (g_eBrushType == BRUSH_RECT)
+	else if (Global::eBrushType == BRUSH_RECT)
 		_rRect.Draw(_rWindow, _pRenderTex);
-	else if (g_eBrushType == BRUSH_ELLIPSE)
+	else if (Global::eBrushType == BRUSH_ELLIPSE)
 		_rEllipse.Draw(_rWindow, _pRenderTex);
 }
 
@@ -308,7 +301,7 @@ int main()
 	ResetScreenAndWindowSize();
 
 	// Our main paint window
-	sf::RenderWindow rWindow(sf::VideoMode(g_iWindowWidth, g_iWindowHeight), "Paint");
+	sf::RenderWindow rWindow(sf::VideoMode(Global::iWindowWidth, Global::iWindowHeight), "Paint");
 
 	// To draw texture 
 	sf::RenderTexture* pRenderTex = new sf::RenderTexture();
@@ -397,7 +390,7 @@ int main()
 		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse);
 
 		// Do stuff if we clicked or released
-		if (WasMouseJustClicked())
+		if (Global::WasMouseJustClicked())
 		{
 			OnClick(rWindow, rLine, rRect, rEllipse);
 
@@ -411,7 +404,7 @@ int main()
 				iMenuSelection = GetLastMenuSelection();
 			}
 		}
-		else if (g_bMouseReleased)
+		else if (Global::bMouseReleased)
 		{
 			OnRelease(rLine, rRect, rEllipse);
 		}

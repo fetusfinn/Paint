@@ -155,7 +155,6 @@
   <ItemGroup>
     <ClInclude Include="ellipse.h" />
     <ClInclude Include="globals.h" />
-    <ClInclude Include="shape.h" />
     <ClInclude Include="rect.h" />
     <ClInclude Include="line.h" />
   </ItemGroup>
