@@ -89,6 +89,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,6 +107,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,10 +154,15 @@
     <ClCompile Include="rect.cpp" />
     <ClCompile Include="ellipse.cpp" />
     <ClCompile Include="polygon.cpp" />
+    <ClCompile Include="save.cpp" />
+    <ClCompile Include="notif.cpp" />
+    <ClCompile Include="globals.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ellipse.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="notif.h" />
+    <ClInclude Include="save.h" />
     <ClInclude Include="polygon.h" />
     <ClInclude Include="rect.h" />
     <ClInclude Include="line.h" />

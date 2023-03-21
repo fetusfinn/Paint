@@ -12,6 +12,7 @@
 #include "polygon.h"
 
 #include "globals.h"
+#include "save.h"
 
 //
 // The different brush types
@@ -37,7 +38,8 @@ enum EMenuIndex
 	MENU_INDEX_POLY,
 	MENU_INDEX_BRUSH_SIZE,
 	MENU_INDEX_CLEAR,
-	MENU_INDEX_SAVE,		// TODO
+	MENU_INDEX_SAVE,
+	MENU_INDEX_LOAD,
 	MENU_INDEX_COLOURS,
 };
 
@@ -47,50 +49,8 @@ namespace Global
 	// Static beacuse its only used in this file
 	static EBrushType eBrushType = BRUSH_LINE;
 
-	// The size of our brush
-	float fBrushSize = 0;
-
-	// The colour we want to draw with
-	sf::Color rBrushColour = sf::Color::Black;
-
 	// The size of the user's screen
 	int iScreenWidth, iScreenHeight;
-
-	// The size of our window
-	int iWindowWidth, iWindowHeight;
-
-	// Whether or not the mouse is currently clicked
-	bool bMouseDown = false;
-
-	// Whether or not the mouse was released this tick
-	bool bMouseReleased = false;
-
-	// To keep track of how long the user holds click
-	int iClickCounter = 0;
-
-	// The area where the user shouldnt be able to draw
-	// which is just the menu bar
-	sf::Vector2f rExclusionZone;
-}
-
-//
-// Returns true if the mouse is within the given area
-//
-bool Global::InArea(float x, float y, float w, float h, const sf::RenderWindow& _rWindow)
-{
-	bool bRet = false;
-
-	sf::Vector2i tMousePos = sf::Mouse::getPosition(_rWindow);
-
-	// mouse within x range
-	if (tMousePos.x >= x && tMousePos.x <= (x + w))
-	{
-		// mouse within y range
-		if (tMousePos.y >= y && tMousePos.y <= (y + h))
-			bRet = true;
-	}
-
-	return bRet;
 }
 
 //
@@ -150,7 +110,6 @@ void ResetScreenAndWindowSize()
 //
 int GetLastMenuSelection()
 {
-
 	switch (Global::eBrushType)
 	{
 	case BRUSH_LINE:
@@ -206,9 +165,37 @@ int HandleMenuSelection(int _iSelection, CGui& _rGui, sf::RenderTexture* _pRende
 
 	case MENU_INDEX_BRUSH_SIZE:
 		// Functionality is done in ChangeBrushSize()
+		Global::rNotifs.Add("Brush size changed.");
 		break;
 
 	case MENU_INDEX_CLEAR:
+		// Functionality done in main()
+		Global::rNotifs.Add("Canvas cleared.");
+		break;
+
+	case MENU_INDEX_SAVE:
+		{
+			FileLoader::SaveCanvas(_pRenderTex);
+
+			// Change the menu selection to what we had last so we dont keep on saving
+			iMenuSelection = GetLastMenuSelection();
+
+			Global::rNotifs.Add("Canvas saved.");
+		}	
+		break;
+
+	case MENU_INDEX_LOAD:
+		{
+			if (!FileLoader::LoadCanvas(_pRenderTex))
+			{
+				// Maybe do something
+			}
+
+			// Change the menu selection to what we had last so we dont keep on loading
+			iMenuSelection = GetLastMenuSelection();
+
+			Global::rNotifs.Add("Canvas loaded.");
+		}
 		break;
 	}
 
@@ -368,6 +355,9 @@ int main()
 	// Our main paint window
 	sf::RenderWindow rWindow(sf::VideoMode(Global::iWindowWidth, Global::iWindowHeight), "Paint");
 
+	// Load our font in
+	Global::rFont.loadFromFile("fonts/arial.ttf");
+
 	// Our texture to draw to
 	sf::RenderTexture* pRenderTex = new sf::RenderTexture();
 
@@ -381,8 +371,8 @@ int main()
 	pCanvas->setTexture(&pRenderTex->getTexture());
 
 
-
 	// Our shapes
+	// Tried making a CShape class but it was causing linking errors
 	CLine rLine;
 	CRectangle rRect;
 	CEllipse rEllipse;
@@ -397,11 +387,13 @@ int main()
 		TMenuItemData(1, "Line",			MENU_INDEX_LINE),
 		TMenuItemData(1, "Rectangle",		MENU_INDEX_RECT),
 		TMenuItemData(1, "Ellipse",			MENU_INDEX_ELLIPSE),
-		TMenuItemData(1, "Polygon",		MENU_INDEX_POLY),
+		TMenuItemData(1, "Polygon",			MENU_INDEX_POLY),
 		TMenuItemData(1, "Brush size: 1",	MENU_INDEX_BRUSH_SIZE),
 		TMenuItemData(1, "Clear",			MENU_INDEX_CLEAR),
+		TMenuItemData(1, "Save",			MENU_INDEX_SAVE),
+		TMenuItemData(1, "Load",			MENU_INDEX_LOAD),
 
-		// Colours are done last so theyre drawn at the end of our menu
+		// Colours are done last so they're drawn at the end of our menu
 		TMenuItemData(2, "Colours",			MENU_INDEX_COLOURS),
 	};
 
@@ -467,6 +459,8 @@ int main()
 			bClearedThisTick = true;
 		}
 
+		Global::rNotifs.Update();
+
 		// Draw with selected brush type
 		UpdateBrushStrokes(rWindow, rLine, rRect, rEllipse, rPoly, bClearedThisTick);
 
@@ -499,6 +493,8 @@ int main()
 		// Draw our shapes
 		DrawShapes(rWindow, pRenderTex, rLine, rRect, rEllipse, rPoly);
 
+		Global::rNotifs.Draw(&rWindow);
+
 		// Draw our GUI last so its on top of everything else
 		rGui.Draw();
 
@@ -512,3 +508,74 @@ int main()
 
 	return 0;
 }
+
+/*
+void cPolygonShape::vDrawPolygon(sf::RenderWindow* _window, sf::RenderTexture* _rTex, sf::Vector2f _mousePos, sf::Event _mouseEvent)
+{
+	// Mouse clicks
+	bool bLeftClick  = _mouseEvent.mouseButton.button == sf::Mouse::Left;
+	bool bRightClick = _mouseEvent.mouseButton.button == sf::Mouse::Right;
+	bool bMouseClicked = _mouseEvent.type == sf::Event::MouseButtonPressed;
+	bool bMouseReleaed = _mouseEvent.type == sf::Event::MouseButtonReleased;
+
+	// On a right click we want to draw the real polygon
+	bool bDraw = bMouseClicked && bRightClick;
+
+	if (bDraw)
+	{
+		// Set polygon values
+		m_Polygon.setPointCount(m_InputPoints.size());
+		m_Polygon.setFillColor(m_PolyFillColor);
+		m_Polygon.setOutlineColor(m_PolyOutlineColor);
+		m_Polygon.setOutlineThickness(m_fPolyWidth * -1);
+
+		for (int i = 0; i < m_InputPoints.size(); i++)
+		{
+			m_Polygon.setPoint(i, m_InputPoints.at(i));
+		}
+
+		_rTex->draw(m_Polygon);
+		_rTex->display();
+
+		// Reset array and point count
+		m_InputPoints.clear();
+		m_PolyPoints.clear();
+	}
+	else
+	{
+		// If we just left clicked
+		if (bMouseClicked && bLeftClick)
+		{
+			// Add the point we just clicked
+			// Checks if mouse is in canvas for starting point
+			if (_mousePos.x < (_window->getSize().x - 80) && _mousePos.y > 20)
+			{
+				m_InputPoints.push_back(sf::Vector2f(_mousePos.x, _mousePos.y - 20));
+			}
+		}
+
+		// No points, dont draw
+		if (m_InputPoints.empty())
+			return;
+
+		// Draw placeholder
+
+		// The placeholder shape to draw
+		sf::VertexArray rPlaceholder;
+		rPlaceholder.setPrimitiveType(sf::LineStrip);
+
+		// Create the vertex array
+		for (int i = 0; i < m_InputPoints.size(); i++)
+		{
+			sf::Vector2f rPoint = m_InputPoints.at(i);
+			rPlaceholder.append(sf::Vertex(sf::Vector2f(rPoint), m_PolyFillColor);
+		}
+
+		// Add the mouse's position so it draws a line between the last point and the mouse
+		rPlaceholder.append(sf::Vertex(sf::Vector2f(sf::Mouse::getPosition(*_window)), m_PolyFillColor));
+
+		// Draw placeholder
+		_window->draw(rPlaceholder);
+	}
+}
+*/

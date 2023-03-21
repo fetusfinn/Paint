@@ -15,8 +15,7 @@ static const sf::Color g_rColourInvalid(123, 123, 123);
 //
 CGui::CGui(sf::RenderWindow* _pWindow) : m_pWindow(_pWindow), m_rOffset({ 0,0 }), m_bColourOpen(false)
 {
-    // Load our font, maybe make this static or global
-    m_rFont.loadFromFile("fonts/arial.ttf");
+
 }
 
 //
@@ -120,25 +119,6 @@ int CGui::HandleMenuBar(int _iLastSelection, const std::vector<TMenuItemData>& _
 }
 
 //
-// Create a label for us to draw
-//
-sf::Text* CGui::Label(float x, float y, const std::string& _strLabel)
-{
-    sf::Text* pText = new sf::Text();
-
-    pText->setFont(m_rFont);
-    pText->setFillColor(sf::Color::Black);
-    pText->setString(_strLabel);
-
-    // Use a huge font size then it scale down to get rid of the blurriness 
-    pText->setCharacterSize(60);
-    pText->setPosition(x, y);
-    pText->setScale(sf::Vector2f(0.2f, 0.2f));
-
-    return pText;
-}
-
-//
 // Create a button for us to draw and add functionality
 //
 bool CGui::Button(const std::string& _strLabel)
@@ -151,7 +131,7 @@ bool CGui::Button(const std::string& _strLabel)
     const float w = 80, h = 30;
 
     // Create our label
-    sf::Text* pLabel = Label(x + 10, y + 5, _strLabel);
+    sf::Text* pLabel = Global::CreateLabel(x + 10, y + 5, _strLabel);
 
     // The labels bounds
     sf::FloatRect rTextBounds = pLabel->getLocalBounds();

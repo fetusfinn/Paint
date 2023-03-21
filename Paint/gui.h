@@ -43,16 +43,11 @@ private:
 	// menu items position
 	sf::Vector2f m_rOffset;
 
-	// Our menu font 
-	sf::Font m_rFont;
-
 	// Whether the colour picker is open
 	bool m_bColourOpen;
 
-
 	//bool InArea(float x, float y, float w, float h);
 	bool Button(const std::string& _strLabel);
-	sf::Text* Label(float x, float y, const std::string& _strLabel);
 	sf::Color ColourPicker(const std::vector<sf::Color>& _vColours);
 
 public:

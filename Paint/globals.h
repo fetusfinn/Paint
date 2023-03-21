@@ -7,6 +7,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "notif.h"
+
 // Print macro
 #include <iostream>
 #define debug(msg) std::cout << "[debug] " << msg << std::endl
@@ -20,6 +22,9 @@ namespace Global
 	// The colour we want to draw with
 	extern sf::Color rBrushColour;
 
+	// The size of our window
+	extern int iWindowWidth, iWindowHeight;
+
 	// Whether or not the mouse is currently clicked
 	extern bool bMouseDown;
 
@@ -29,9 +34,16 @@ namespace Global
 	// To keep track of how long the user holds click
 	extern int iClickCounter;
 
+	// Our menu font 
+	extern sf::Font rFont;
+
 	// The area where the user shouldnt be able to draw
 	// which is just the menu bar
 	extern sf::Vector2f rExclusionZone;
+
+	// Our notification manager obj
+	// Is global because it is used thruout the project
+	extern CNotificationManager rNotifs;
 
 	// Inlined functions because they are tiny
 
@@ -54,4 +66,5 @@ namespace Global
 	}
 
 	extern bool InArea(float x, float y, float w, float h, const sf::RenderWindow& _rWindow);
+	extern sf::Text* CreateLabel(float x, float y, const std::string& _strLabel);
 }
