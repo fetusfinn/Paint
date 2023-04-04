@@ -2,7 +2,6 @@
 //	save.cpp
 //
 #include <string>
-#include <fstream>
 #include <filesystem>
 
 #include "globals.h"
@@ -10,6 +9,9 @@
 
 #include <Windows.h>
 
+//
+// Done all by myself before we did this in class
+//
 
 // Our file paths
 static const std::string g_rFolder		= "Saves\\";
